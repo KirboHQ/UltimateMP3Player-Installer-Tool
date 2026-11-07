@@ -237,7 +237,7 @@ public partial class MainWindow : Window
         await UntilDoneAsync(async () =>
         {
             if (await Setup.EngineReadyAsync(Ct)) return;
-            if (!await Setup.WslPresentAsync(Ct)) throw new BlockedException(Blocker.WslConsent, "ask");
+            if (!await Setup.WslPresentAsync(Ct) || !Setup.VmPlatformPresent()) throw new BlockedException(Blocker.WslConsent, "ask");
             await Setup.PrepareEngineAsync((p, text) => Dispatcher.UIThread.Post(() => _engineRow.Working(text, p)), Ct);
         });
         _engineRow.Done(L.T("Ready"));
@@ -334,7 +334,7 @@ public partial class MainWindow : Window
                 BlockerCard.IsVisible = false;
                 _engineRow.Working(L.T("Checking"));
                 await Setup.InstallWslAsync(Ct);
-                if (!await Setup.WslPresentAsync(Ct)) throw new BlockedException(Blocker.Reboot);
+                if (!await Setup.WslPresentAsync(Ct) || !Setup.VmPlatformPresent()) throw new BlockedException(Blocker.Reboot);
                 return;
             case Blocker.Reboot:
                 Card("Restart your computer", "Windows needs a restart to finish. Save what you're working on: afterwards I'll reopen by myself, right from here.", "Restart now", () =>

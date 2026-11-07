@@ -161,6 +161,15 @@ public static class Setup
         catch { return false; }
     }
 
+    // The Virtual Machine Platform, without which WSL 2 can't start: "wsl --status" answers fine when it's off or still waiting for a
+    // restart. Its service exists only once it's really on, and that's how WSL itself tells.
+    public static bool VmPlatformPresent()
+    {
+        if (!OperatingSystem.IsWindows()) return true;
+        using var service = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\vmcompute");
+        return service != null;
+    }
+
     // Windows' own permission window comes up here, the only time this program asks to be an administrator.
     public static async Task InstallWslAsync(CancellationToken ct)
     {
@@ -189,9 +198,13 @@ public static class Setup
         catch { }
     }
 
-    private static Exception WslFailure(string output)
+    internal static Exception WslFailure(string output, bool? platform = null)
     {
         string o = output.ToUpperInvariant();
+        // Nobody answers for virtual machines. With the platform missing, turning it on is the way; with it there, the hypervisor isn't running.
+        // shortcut: a hypervisor turned off at boot (bcdedit) gets the BIOS card too, give it a card of its own if people run into that.
+        if (o.Contains("0X80370114") || o.Contains("HCS_E_SERVICE_NOT_AVAILABLE"))
+            return (platform ?? VmPlatformPresent()) ? new BlockedException(Blocker.Virtualization, output) : new BlockedException(Blocker.WslConsent, "ask");
         if (o.Contains("0X80370102") || o.Contains("HCS_E_HYPERV_NOT_INSTALLED") || o.Contains("VIRTUALIZATION") || o.Contains("VIRTUALIZZAZIONE"))
             return new BlockedException(Blocker.Virtualization, output);
         if (o.Contains("WSL_E_WSL_OPTIONAL_COMPONENT_REQUIRED") || o.Contains("REBOOT") || o.Contains("RESTART") || o.Contains("RIAVVI") || o.Contains("REGDB_E_CLASSNOTREG"))

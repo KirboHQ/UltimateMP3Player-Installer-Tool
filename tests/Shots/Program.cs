@@ -76,6 +76,9 @@ Check(Releases.IsNewer("5.1.1", "5.1.0") && !Releases.IsNewer("5.1.0", "5.1.1") 
 Check(Releases.IsNewer("5.10.0", "5.9.9"), "versions are numbers, not text");
 Check(Setup.ToLinuxPath(@"C:\Users\Some One\x.ipa") == "/mnt/c/Users/Some One/x.ipa", "a Windows path in Linux");
 Check(!Setup.WslArgs("sh", "-c", "set -e\r\ncd /\r\n").Any(a => a.Contains('\r')), "a script reaches Linux with Linux's line endings, whatever the checkout has");
+const string noVmService = "Wsl/Service/RegisterDistro/CreateVm/HCS/HCS_E_SERVICE_NOT_AVAILABLE";
+Check(Setup.WslFailure(noVmService, platform: false) is BlockedException { Blocker: Blocker.WslConsent, Message: "ask" }, "the platform missing leads to asking to turn it on");
+Check(Setup.WslFailure(noVmService, platform: true) is BlockedException { Blocker: Blocker.Virtualization }, "the platform there and still no service leads to the BIOS, not round again");
 string tools = Path.Combine(folder, "tools");
 Directory.CreateDirectory(tools);
 File.Delete(Path.Combine(tools, "unzip"));

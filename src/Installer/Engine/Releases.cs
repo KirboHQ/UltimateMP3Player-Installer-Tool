@@ -16,7 +16,7 @@ public static class Releases
     public const string ShareLink = "https://github.com/" + ToolRepo;
     public const string IssuesLink = "https://github.com/" + ToolRepo + "/issues/new";
 
-    public static readonly string ToolVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.1";
+    public static readonly string ToolVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.2";
 
     // The newest release that has its .ipa: it comes about 10 minutes after the release itself, from the Mac that builds it, so in
     // those minutes "latest" alone would find nothing.
