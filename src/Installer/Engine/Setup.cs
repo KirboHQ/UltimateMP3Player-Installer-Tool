@@ -9,7 +9,7 @@ using Microsoft.Win32;
 namespace Installer;
 
 // What stops the setup until the person does something: each one has its own words and its own button on the screen.
-public enum Blocker { None, AppleDevices, Usbmuxd, WslConsent, Reboot, Virtualization, OldWindows }
+public enum Blocker { None, AppleDevices, Usbmuxd, ZipTools, WslConsent, Reboot, Virtualization, OldWindows }
 
 public sealed class BlockedException(Blocker blocker, string detail = "") : Exception(detail)
 {
@@ -38,6 +38,20 @@ public static class Setup
     private static (string Url, string Sha256) LinuxAsset => Arm
         ? (UbuntuBase + "ubuntu-base-24.04.5-base-arm64.tar.gz", "a91d5a93010193712d346d761372b7c9db6dfcf093893161c64ca107f05914f2")
         : (UbuntuBase + "ubuntu-base-24.04.5-base-amd64.tar.gz", "e77b6f10c2590cef872b33ee9f635a0e3fd1f57fb074c0e52b5c7f56147a0c86");
+
+    // xtool runs these two by name, to open the .ipa and to close it again once signed, and the base has neither. The release's own
+    // files: they stay in Ubuntu's pool for as long as the release does, while those of its updates get replaced. What they need is in the base.
+    private static (string Url, string Sha256)[] ZipPackages => Arm
+        ? new[]
+        {
+            ("https://ports.ubuntu.com/ubuntu-ports/pool/main/z/zip/zip_3.0-13build1_arm64.deb", "7b5af36fbf287221ea21aa08817f139b6ef463c07aeb2dc0e4233d2272b0c64c"),
+            ("https://ports.ubuntu.com/ubuntu-ports/pool/main/u/unzip/unzip_6.0-28ubuntu4_arm64.deb", "d86487038933474265b128366cea64e61e0b99471aa7499ea0173411831736aa"),
+        }
+        : new[]
+        {
+            ("https://archive.ubuntu.com/ubuntu/pool/main/z/zip/zip_3.0-13build1_amd64.deb", "5c1a2dfb052f50e7031037aa2e267839804d2254c4d282040fdfe826ffba1e38"),
+            ("https://archive.ubuntu.com/ubuntu/pool/main/u/unzip/unzip_6.0-28ubuntu4_amd64.deb", "9ea37bc2f1e43df0a98530d08e5bab1a8801bdaf0a4c81330861e788d9155bbc"),
+        };
 
     public static string DataDir { get; } = Environment.GetEnvironmentVariable("UMP_INSTALLER_DATA") is { Length: > 0 } test
         ? test
@@ -87,8 +101,9 @@ public static class Setup
     }
 
     // A command in our Linux, as root (it's nobody's but ours). -e: without a shell in between, the arguments stay as they are.
+    // Without \r: a script in a raw string has the line endings of the checkout, CRLF on the Windows that builds the release, and sh can't read those.
     public static IEnumerable<string> WslArgs(params string[] command)
-        => new[] { "-d", Distro, "-u", "root", "--cd", "/", "-e" }.Concat(command);
+        => new[] { "-d", Distro, "-u", "root", "--cd", "/", "-e" }.Concat(command.Select(c => c.Replace("\r", "")));
 
     private static Task<(int Code, string Output)> InLinuxAsync(CancellationToken ct, string script, string? input = null, params string[] args)
         => RunAsync("wsl.exe", WslArgs(new[] { "sh", "-c", script, "sh" }.Concat(args).ToArray()), ct, input);
@@ -194,11 +209,20 @@ public static class Setup
 
     public static async Task<bool> EngineReadyAsync(CancellationToken ct)
     {
+        // (a Mac always has them; on Linux they're the person's system's, and many have only one or none)
+        if (OperatingSystem.IsLinux() && !HasZipTools()) throw new BlockedException(Blocker.ZipTools);
         if (!OperatingSystem.IsWindows())
             return File.Exists(NativeXtool) && File.Exists(VersionFile) && (await File.ReadAllTextAsync(VersionFile, ct)).Trim() == XtoolVersion;
         if (!await WslPresentAsync(ct) || !await DistroPresentAsync(ct)) return false;
-        var (code, output) = await InLinuxAsync(ct, "cat /opt/ump/version");
+        // (the two tools as well: a private Linux can have the right xtool without them, if it was set up before they went in)
+        var (code, output) = await InLinuxAsync(ct, "[ -x /usr/bin/zip ] && [ -x /usr/bin/unzip ] && cat /opt/ump/version");
         return code == 0 && output.Trim() == XtoolVersion;
+    }
+
+    public static bool HasZipTools(string? path = null)
+    {
+        var dirs = (path ?? Environment.GetEnvironmentVariable("PATH") ?? "").Split(Path.PathSeparator);
+        return new[] { "zip", "unzip" }.All(tool => dirs.Any(dir => File.Exists(Path.Combine(dir, tool))));
     }
 
     private static async Task<bool> DistroPresentAsync(CancellationToken ct)
@@ -288,6 +312,15 @@ public static class Setup
         File.Delete(image);
 
         progress(null, L.T("Finishing up"));
+        var debs = new List<string>();
+        foreach (var (url, sha) in ZipPackages)
+        {
+            debs.Add(InData(Path.GetFileName(url)));
+            await DownloadAsync(url, debs[^1], sha, _ => { }, ct);
+        }
+        (done, log) = await InLinuxAsync(ct, "dpkg -i \"$@\" > /dev/null", null, debs.Select(ToLinuxPath).ToArray());
+        if (done != 0) throw WslFailure(log);
+        debs.ForEach(File.Delete);
         (done, log) = await InLinuxAsync(ct, "mkdir -p /etc/ssl/certs && cat > /etc/ssl/certs/ca-certificates.crt", SystemRoots());
         if (done != 0) throw WslFailure(log);
         (done, log) = await InLinuxAsync(ct, "cat > /opt/ump/relay.pl", Relay.Script.Replace("\r", ""));

@@ -63,6 +63,10 @@ Ubuntu Base 24.04.5 (Windows: the private Linux that xtool runs in)
   Licenses: each package its own, listed inside it in /usr/share/doc/<package>/copyright.
   Source: https://cdimage.ubuntu.com/ubuntu-base/releases/24.04/release/, https://packages.ubuntu.com/noble/
 
+zip 3.0 and unzip 6.0, Ubuntu's packages (Windows: with them xtool opens the app and closes it again, in the private Linux)
+  License: Info-ZIP, inside each in /usr/share/doc/<package>/copyright.
+  Source: https://packages.ubuntu.com/noble/zip, https://packages.ubuntu.com/noble/unzip
+
 Ultimate MP3 Player, the iPhone app itself
   License: GNU General Public License version 3. Source: https://github.com/KirboHQ/UltimateMP3Player
 

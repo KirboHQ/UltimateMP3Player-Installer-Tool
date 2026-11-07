@@ -75,6 +75,14 @@ Check(Errors.For("nothing known here").Title == L.T("Something didn't work"), "a
 Check(Releases.IsNewer("5.1.1", "5.1.0") && !Releases.IsNewer("5.1.0", "5.1.1") && !Releases.IsNewer("5.1.0", "5.1.0"), "newer versions");
 Check(Releases.IsNewer("5.10.0", "5.9.9"), "versions are numbers, not text");
 Check(Setup.ToLinuxPath(@"C:\Users\Some One\x.ipa") == "/mnt/c/Users/Some One/x.ipa", "a Windows path in Linux");
+Check(!Setup.WslArgs("sh", "-c", "set -e\r\ncd /\r\n").Any(a => a.Contains('\r')), "a script reaches Linux with Linux's line endings, whatever the checkout has");
+string tools = Path.Combine(folder, "tools");
+Directory.CreateDirectory(tools);
+File.Delete(Path.Combine(tools, "unzip"));
+File.WriteAllText(Path.Combine(tools, "zip"), "");
+Check(!Setup.HasZipTools(tools), "zip alone isn't enough");
+File.WriteAllText(Path.Combine(tools, "unzip"), "");
+Check(Setup.HasZipTools("nowhere" + Path.PathSeparator + tools), "zip and unzip found along the path");
 
 // ---- A file that's half or wrong never gets used
 

@@ -321,6 +321,10 @@ public partial class MainWindow : Window
                 Card("usbmuxd is missing", "It's the small service that talks to the iPhone. Install it with your system's packages, for example:\nsudo apt install usbmuxd\nI'll notice by myself and carry on.", null, null);
                 while (!await Usbmux.RunningAsync(Ct)) await Task.Delay(1500, Ct);
                 return;
+            case Blocker.ZipTools:
+                Card("zip and unzip are missing", "The signing engine needs them to open the app and to close it again once signed. Install them with your system's packages, for example:\nsudo apt install zip unzip\nI'll notice by myself and carry on.", null, null);
+                while (!Setup.HasZipTools()) await Task.Delay(1500, Ct);
+                return;
             case Blocker.WslConsent:
                 bool refused = blocked.Message != "ask";
                 Card(refused ? "Permission wasn't given" : "Windows needs a small component",

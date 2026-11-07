@@ -54,6 +54,8 @@ public static class L
         ["Install Apple Devices"] = "Installa Dispositivi Apple",
         ["It's Apple's free app that lets Windows talk to the iPhone. Press Get in the Store: I'll notice by myself and carry on."] = "È l'app gratuita di Apple che fa parlare Windows con l'iPhone. Premi Ottieni nello Store: me ne accorgo da solo e proseguo.",
         ["Open the Store"] = "Apri lo Store",
+        ["zip and unzip are missing"] = "Mancano zip e unzip",
+        ["The signing engine needs them to open the app and to close it again once signed. Install them with your system's packages, for example:\nsudo apt install zip unzip\nI'll notice by myself and carry on."] = "Al motore di firma servono per aprire l'app e per richiuderla una volta firmata. Installali dai pacchetti del tuo sistema, per esempio:\nsudo apt install zip unzip\nMe ne accorgo da solo e proseguo.",
         ["usbmuxd is missing"] = "Manca usbmuxd",
         ["It's the small service that talks to the iPhone. Install it with your system's packages, for example:\nsudo apt install usbmuxd\nI'll notice by myself and carry on."] = "È il piccolo servizio che parla con l'iPhone. Installalo dai pacchetti del tuo sistema, per esempio:\nsudo apt install usbmuxd\nMe ne accorgo da solo e proseguo.",
         ["Windows needs a small component"] = "A Windows serve un piccolo componente",

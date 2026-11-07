@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="src/Installer/Assets/icon.png" width="96" alt="Logo di Ultimate MP3 Player">
+  <img src="assets/readme/icon.png" width="96" alt="Logo di Ultimate MP3 Player Installer">
 </p>
 
 <h1 align="center">Ultimate MP3 Player Installer</h1>
@@ -65,7 +65,7 @@ Trascinalo dallo zip in *Applicazioni*. La prima volta apri **Impostazioni di Si
 <summary><b>Linux</b></summary>
 <br>
 
-Serve `usbmuxd` (il pacchetto si chiama così quasi ovunque), e te lo dice lui se manca:
+Servono `usbmuxd`, `zip` e `unzip` (i pacchetti si chiamano così quasi ovunque), e te lo dice lui se ne manca uno:
 
 ```sh
 tar -xzf UltimateMP3Player-Installer-linux-x64.tar.gz

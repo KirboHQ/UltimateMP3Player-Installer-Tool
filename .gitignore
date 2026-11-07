@@ -402,3 +402,7 @@ FodyWeavers.xsd
 
 # Packages built by hand
 out/
+
+# Claude Code's own files stay on this computer
+CLAUDE.md
+.claude/

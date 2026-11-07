@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="src/Installer/Assets/icon.png" width="96" alt="Ultimate MP3 Player logo">
+  <img src="assets/readme/icon.png" width="96" alt="Ultimate MP3 Player Installer logo">
 </p>
 
 <h1 align="center">Ultimate MP3 Player Installer</h1>
@@ -65,7 +65,7 @@ Anyway**. If macOS says the app "is damaged", run once in the Terminal:
 <summary><b>Linux</b></summary>
 <br>
 
-It needs `usbmuxd` (the package has that name almost everywhere), and it tells you if it's missing:
+It needs `usbmuxd`, `zip` and `unzip` (the packages have those names almost everywhere), and it tells you if one is missing:
 
 ```sh
 tar -xzf UltimateMP3Player-Installer-linux-x64.tar.gz
