@@ -1,0 +1,118 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:Installer"
+             x:Class="Installer.PhoneView"
+             Width="372" Height="772" ClipToBounds="False">
+    <!-- An iPhone drawn here, that shows what's going on and what to tap. 312×640, in a canvas that leaves room for the cable
+         coming up from the window's bottom edge. -->
+    <Panel>
+        <!-- A USB-C cable to the same scale as the phone (71 mm = 312): an 8 mm metal tip, a 13 mm white body narrowing into the
+             wire. Seated, the tip is behind the phone and the body touches its edge. -->
+        <Panel x:Name="Cable" Width="58" Height="340" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,618,0,0" IsVisible="False">
+            <!-- The wire, under the body. -->
+            <Border Width="14" Margin="0,100,0,0" VerticalAlignment="Stretch">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
+                        <GradientStop Color="#A9A9B4" Offset="0"/>
+                        <GradientStop Color="#F4F4F8" Offset="0.42"/>
+                        <GradientStop Color="#B4B4BE" Offset="1"/>
+                    </LinearGradientBrush>
+                </Border.Background>
+            </Border>
+            <!-- The metal tip, with its opening at the end. -->
+            <Border Width="36" Height="38" VerticalAlignment="Top" CornerRadius="7,7,2,2" Margin="0,0,0,0">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
+                        <GradientStop Color="#70707C" Offset="0"/>
+                        <GradientStop Color="#D9D9E1" Offset="0.22"/>
+                        <GradientStop Color="#F7F7FA" Offset="0.48"/>
+                        <GradientStop Color="#BDBDC8" Offset="0.8"/>
+                        <GradientStop Color="#6A6A76" Offset="1"/>
+                    </LinearGradientBrush>
+                </Border.Background>
+                <Border Width="26" Height="5" VerticalAlignment="Top" Margin="0,3,0,0" CornerRadius="2.5" Background="#1C1C24"/>
+            </Border>
+            <!-- The body: rounded at the top, narrowing softly at the bottom. -->
+            <Path Width="58" Height="74" VerticalAlignment="Top" Margin="0,34,0,0" Stretch="None"
+                  Data="M 13,0 H 45 Q 58,0 58,13 V 46 Q 58,56 49,60 L 38,66 Q 35,68 35,74 H 23 Q 23,68 20,66 L 9,60 Q 0,56 0,46 V 13 Q 0,0 13,0 Z">
+                <Path.Fill>
+                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
+                        <GradientStop Color="#B9B9C4" Offset="0"/>
+                        <GradientStop Color="#EDEDF2" Offset="0.16"/>
+                        <GradientStop Color="#FFFFFF" Offset="0.42"/>
+                        <GradientStop Color="#E6E6EC" Offset="0.8"/>
+                        <GradientStop Color="#ACACB8" Offset="1"/>
+                    </LinearGradientBrush>
+                </Path.Fill>
+            </Path>
+        </Panel>
+
+        <Panel x:Name="Body" Width="312" Height="640" VerticalAlignment="Top" Margin="0,12,0,0">
+            <!-- Side buttons. -->
+            <Border Width="3" Height="26" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-2,108,0,0" CornerRadius="2" Background="#3A3A46"/>
+            <Border Width="3" Height="48" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-2,150,0,0" CornerRadius="2" Background="#3A3A46"/>
+            <Border Width="3" Height="48" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-2,208,0,0" CornerRadius="2" Background="#3A3A46"/>
+            <Border Width="3" Height="76" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,170,-2,0" CornerRadius="2" Background="#3A3A46"/>
+
+            <Border CornerRadius="54" Background="#07070B" BoxShadow="0 30 80 -10 #C0000000"/>
+            <Border CornerRadius="54" BorderThickness="1.5">
+                <Border.BorderBrush>
+                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                        <GradientStop Color="#7C7C8C" Offset="0"/>
+                        <GradientStop Color="#2E2E38" Offset="0.5"/>
+                        <GradientStop Color="#6A6A78" Offset="1"/>
+                    </LinearGradientBrush>
+                </Border.BorderBrush>
+            </Border>
+
+            <!-- The port, on the bottom edge. -->
+            <Border Width="38" Height="3" CornerRadius="1.5" Background="#2A2A33" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,0.5"/>
+
+            <Border x:Name="ScreenBox" Margin="10" CornerRadius="44" ClipToBounds="True" Background="Black">
+                <Panel x:Name="Screen" Background="Black">
+
+                    <!-- The real app, one screen after the other. -->
+                    <Panel x:Name="ShowcaseScene" ClipToBounds="True">
+                        <Image x:Name="ShotBack" Stretch="UniformToFill" RenderOptions.BitmapInterpolationMode="HighQuality"/>
+                        <Image x:Name="ShotFront" Stretch="UniformToFill" RenderOptions.BitmapInterpolationMode="HighQuality"/>
+                    </Panel>
+
+                    <Panel x:Name="LockScene" IsVisible="False" Background="{StaticResource Wallpaper}">
+                        <StackPanel VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,74,0,0" Spacing="0">
+                            <TextBlock x:Name="LockDate" HorizontalAlignment="Center" FontSize="16" FontWeight="SemiBold" Foreground="#E6FFFFFF"/>
+                            <TextBlock x:Name="LockTime" HorizontalAlignment="Center" FontFamily="{StaticResource Display}" FontSize="74" FontWeight="SemiBold" Foreground="White" Margin="0,-4,0,0"/>
+                        </StackPanel>
+                        <Border x:Name="LockHint" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,44" Padding="16,9" CornerRadius="18" Background="#33FFFFFF">
+                            <TextBlock x:Name="LockHintText" FontSize="13.5" FontWeight="SemiBold" Foreground="White" Text="{local:T 'Plug in the cable'}"/>
+                        </Border>
+                    </Panel>
+
+                    <!-- The home screen, with the app arriving on it. -->
+                    <Panel x:Name="HomeScene" IsVisible="False" Background="{StaticResource Wallpaper}">
+                        <UniformGrid x:Name="HomeGrid" Columns="4" VerticalAlignment="Top" Margin="14,66,14,0"/>
+                        <Border VerticalAlignment="Bottom" Margin="12,0,12,12" Height="84" CornerRadius="32" Background="#2EFFFFFF">
+                            <UniformGrid x:Name="HomeDock" Columns="4" Rows="1" Margin="6,0"/>
+                        </Border>
+                    </Panel>
+
+                    <!-- Pages of iOS's Settings and its alerts: where to tap. -->
+                    <Panel x:Name="GuideScene" IsVisible="False" Background="Black" ClipToBounds="True">
+                        <Panel x:Name="GuideHost"/>
+                        <Border x:Name="Tap" Width="44" Height="44" CornerRadius="22" Background="#CCFFFFFF" BorderBrush="#66000000" BorderThickness="1"
+                                HorizontalAlignment="Left" VerticalAlignment="Top" Opacity="0" IsHitTestVisible="False"/>
+                    </Panel>
+
+                    <Image x:Name="AppScene" IsVisible="False" Stretch="UniformToFill" RenderOptions.BitmapInterpolationMode="HighQuality"/>
+                </Panel>
+            </Border>
+
+            <!-- The island, which also says things. -->
+            <Border x:Name="Island" Width="92" Height="27" CornerRadius="14" Background="Black" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,21,0,0" ClipToBounds="True">
+                <StackPanel x:Name="IslandText" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="7" Opacity="0">
+                    <Path x:Name="IslandIcon" Classes="icon" Data="{StaticResource IconCheck}" Width="13" Height="13" Stroke="{StaticResource Good}" StrokeThickness="2.6"/>
+                    <TextBlock x:Name="IslandLabel" FontSize="12.5" FontWeight="SemiBold" Foreground="White" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+        </Panel>
+    </Panel>
+</UserControl>

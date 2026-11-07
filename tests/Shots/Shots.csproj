@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Checks the logic and draws every screen offscreen, into <folder>/shots: prints "shots: ok" or what's wrong. "perf": the real
+       window on screen, every screen and motion, the frames counted. Not part of any release. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Installer\Installer.csproj" />
+    <PackageReference Include="Avalonia.Headless" Version="11.3.22" />
+  </ItemGroup>
+
+</Project>

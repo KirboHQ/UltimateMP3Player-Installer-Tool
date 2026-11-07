@@ -1,0 +1,227 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:Installer"
+        x:Class="Installer.MainWindow"
+        Title="Ultimate MP3 Player Installer"
+        Icon="avares://UltimateMP3PlayerInstaller/Assets/app.ico"
+        Width="1120" Height="740" MinWidth="980" MinHeight="680"
+        WindowStartupLocation="CenterScreen"
+        Background="#0C0A14"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="PreferSystemChrome"
+        ExtendClientAreaTitleBarHeightHint="38">
+    <Panel>
+        <Panel>
+            <local:Aurora x:Name="AuroraBack"/>
+            <local:Aurora x:Name="AuroraFront"/>
+        </Panel>
+
+        <Grid ColumnDefinitions="10*,11*">
+            <!-- A Viewbox: the phone is one drawing at any window size, and the cable always reaches the bottom edge. -->
+            <Viewbox Stretch="Uniform" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="30,30,0,0" ClipToBounds="False">
+                <local:PhoneView x:Name="Phone"/>
+            </Viewbox>
+
+            <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto" Margin="30,60,64,26">
+                <StackPanel x:Name="Header" Spacing="10" Opacity="0" MaxWidth="500">
+                    <TextBlock x:Name="StepLabel" Classes="eyebrow"/>
+                    <local:Bar x:Name="StepBar" Height="4"/>
+                </StackPanel>
+
+                <Panel x:Name="Pages" Grid.Row="1" MaxWidth="500">
+
+                    <!-- Welcome -->
+                    <StackPanel x:Name="WelcomePage" IsVisible="False" VerticalAlignment="Center" Margin="0,-30,0,0">
+                        <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,0,0,20">
+                            <Border CornerRadius="9" ClipToBounds="True" Width="36" Height="36">
+                                <Image Source="avares://UltimateMP3PlayerInstaller/Assets/icon.png"/>
+                            </Border>
+                            <TextBlock Classes="eyebrow" VerticalAlignment="Center" Text="{local:T 'ULTIMATE MP3 PLAYER FOR IPHONE'}"/>
+                        </StackPanel>
+                        <TextBlock Classes="h1" FontSize="52" LineHeight="58" x:Name="WelcomeTitle"/>
+                        <TextBlock Classes="sub" Margin="0,16,0,0" Text="{local:T 'Download it from almost any site and listen offline. Free, with no ads and no subscription.'}"/>
+                        <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" Margin="0,24,0,0" x:Name="Features"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,26,0,0" Spacing="18">
+                            <Button x:Name="StartButton" Classes="primary">
+                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <TextBlock Text="{local:T 'Install it now'}"/>
+                                    <Path Classes="icon" Data="{StaticResource IconArrow}" Stroke="White" Width="17" Height="17" StrokeThickness="2.4" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                        <TextBlock Classes="small" Margin="0,16,0,0" Text="{local:T 'I\'ll guide you. All it takes is a cable and your free Apple ID: about 5 minutes.'}"/>
+                        <Button x:Name="WhyButton" Classes="link" Margin="0,8,0,0" Content="{local:T 'Why isn\'t it on the App Store?'}"/>
+                    </StackPanel>
+
+                    <!-- The computer -->
+                    <StackPanel x:Name="ComputerPage" IsVisible="False" VerticalAlignment="Top" Margin="0,40,0,0">
+                        <TextBlock Classes="h1" Text="{local:T 'Getting your computer ready'}"/>
+                        <TextBlock Classes="sub" Margin="0,12,0,0" Text="{local:T 'It happens only once, and I do nearly all of it.'}"/>
+                        <StackPanel x:Name="ComputerRows" Margin="0,26,0,0" Spacing="18"/>
+                        <Border x:Name="BlockerCard" Classes="card" Margin="0,24,0,0" IsVisible="False">
+                            <StackPanel Spacing="10">
+                                <TextBlock x:Name="BlockerTitle" Classes="title"/>
+                                <TextBlock x:Name="BlockerText" Classes="sub" FontSize="14.5" LineHeight="21"/>
+                                <Button x:Name="BlockerButton" Classes="primary" Height="46" FontSize="15" CornerRadius="23" Padding="26,0" Margin="0,6,0,0" HorizontalAlignment="Left"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- The phone -->
+                    <StackPanel x:Name="ConnectPage" IsVisible="False" VerticalAlignment="Top" Margin="0,40,0,0">
+                        <TextBlock Classes="h1" x:Name="ConnectTitle" Text="{local:T 'Plug in your iPhone'}"/>
+                        <TextBlock Classes="sub" x:Name="ConnectText" Margin="0,12,0,0" Text="{local:T 'Use the cable and unlock it. I\'ll recognize it by myself.'}"/>
+                        <TextBlock x:Name="ConnectHelp" Classes="small" Margin="0,22,0,0" Text="{local:T 'Can\'t see it? Try another cable or port: some cables only charge.'}"/>
+                    </StackPanel>
+
+                    <!-- The Apple ID -->
+                    <StackPanel x:Name="AccountPage" IsVisible="False" VerticalAlignment="Top" Margin="0,40,0,0">
+                        <TextBlock Classes="h1" Text="{local:T 'Sign in with your Apple ID'}"/>
+                        <TextBlock Classes="sub" Margin="0,12,0,0" Text="{local:T 'Apple uses it to sign the app for your iPhone. It\'s free, and you won\'t buy anything.'}"/>
+                        <StackPanel Margin="0,24,0,0" Spacing="12">
+                            <TextBox x:Name="EmailBox" Classes="field" Watermark="{local:T 'Email'}"/>
+                            <TextBox x:Name="PasswordBox" Classes="field" Watermark="{local:T 'Password'}" PasswordChar="•"/>
+                        </StackPanel>
+                        <TextBlock x:Name="AccountError" Classes="sub" FontSize="14.5" LineHeight="21" Foreground="{StaticResource Bad}" Margin="0,12,0,0" IsVisible="False"/>
+                        <StackPanel Orientation="Horizontal" Spacing="16" Margin="0,18,0,0">
+                            <Button x:Name="LoginButton" Classes="primary" Content="{local:T 'Continue'}"/>
+                            <local:Spinner x:Name="LoginSpinner" IsVisible="False" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,18,0,0">
+                            <Path Classes="icon" Data="{StaticResource IconLock}" Stroke="{StaticResource Faint}" Width="14" Height="14" VerticalAlignment="Center"/>
+                            <TextBlock Classes="small" VerticalAlignment="Center" Text="{local:T 'Your password goes only to Apple, and it isn\'t saved.'}"/>
+                        </StackPanel>
+                        <Button x:Name="TrustButton" Classes="link" Margin="0,4,0,0" Content="{local:T 'Can I trust this?'}"/>
+                    </StackPanel>
+
+                    <!-- The code -->
+                    <StackPanel x:Name="CodePage" IsVisible="False" VerticalAlignment="Top" Margin="0,40,0,0">
+                        <TextBlock Classes="h1" Text="{local:T 'Enter the code'}"/>
+                        <TextBlock Classes="sub" Margin="0,12,0,0" Text="{local:T 'Apple sent a 6-digit code to your devices: tap Allow, then type it here.'}"/>
+                        <TextBox x:Name="CodeBox" Classes="field code" Margin="0,26,0,0" MaxLength="6"/>
+                        <StackPanel Orientation="Horizontal" Spacing="16" Margin="0,20,0,0">
+                            <Button x:Name="CodeButton" Classes="primary" Content="{local:T 'Continue'}"/>
+                            <Button x:Name="CodeBack" Classes="link quiet" VerticalAlignment="Center" Content="{local:T 'Back'}"/>
+                            <local:Spinner x:Name="CodeSpinner" IsVisible="False" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Installing -->
+                    <StackPanel x:Name="InstallPage" IsVisible="False" VerticalAlignment="Top" Margin="0,40,0,0">
+                        <TextBlock Classes="h1" x:Name="InstallTitle" Text="{local:T 'Installing the app'}"/>
+                        <TextBlock Classes="sub" Margin="0,12,0,0" Text="{local:T 'Keep the cable plugged in. This takes about a minute.'}"/>
+                        <TextBlock x:Name="InstallPercent" FontFamily="{StaticResource Display}" FontSize="76" FontWeight="SemiBold" Foreground="{StaticResource Brand}" Margin="0,22,0,0" Text="0%"/>
+                        <local:Bar x:Name="InstallBar" Height="6" Margin="0,8,0,0"/>
+                        <TextBlock x:Name="InstallStage" Classes="sub" FontSize="15" Margin="0,12,0,0"/>
+                        <Border x:Name="PhoneRequestCard" Classes="card" Margin="0,20,0,0" IsVisible="False">
+                            <StackPanel Orientation="Horizontal" Spacing="14">
+                                <Path Classes="icon" Data="{StaticResource IconPhone}" Stroke="{StaticResource Warn}" Width="22" Height="22" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="PhoneRequestText" Classes="title" VerticalAlignment="Center" MaxWidth="400"/>
+                            </StackPanel>
+                        </Border>
+                        <Border x:Name="ConfirmCard" Classes="card" Margin="0,20,0,0" IsVisible="False">
+                            <StackPanel Spacing="10">
+                                <TextBlock Classes="title" Text="{local:T 'Replace a certificate?'}"/>
+                                <TextBlock Classes="sub" FontSize="14.5" LineHeight="21" Text="{local:T 'A free Apple ID holds only a couple of signing certificates, and they\'re all in use. If you replace one, other apps signed with it (with SideStore or AltStore, say) will stop opening until you renew them.'}"/>
+                                <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,6,0,0">
+                                    <Button x:Name="ConfirmYes" Classes="soft" Content="{local:T 'Replace it'}"/>
+                                    <Button x:Name="ConfirmNo" Classes="soft" Content="{local:T 'Stop'}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- The last two taps -->
+                    <StackPanel x:Name="ActivatePage" IsVisible="False" VerticalAlignment="Top" Margin="0,40,0,0">
+                        <TextBlock Classes="h1" Text="{local:T 'Just two more taps'}"/>
+                        <TextBlock Classes="sub" Margin="0,12,0,0" Text="{local:T 'You do them only once. Follow the phone beside this text.'}"/>
+                        <StackPanel x:Name="ActivateCards" Margin="0,24,0,0" Spacing="12"/>
+                        <StackPanel Orientation="Horizontal" Spacing="20" Margin="0,22,0,0">
+                            <Button x:Name="ActivateNext" Classes="primary" Content="{local:T 'Done, next'}"/>
+                            <Button x:Name="ActivateSkip" Classes="link quiet" VerticalAlignment="Center" Content="{local:T 'Already done'}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Done -->
+                    <StackPanel x:Name="DonePage" IsVisible="False" VerticalAlignment="Center" Margin="0,-30,0,0">
+                        <TextBlock x:Name="DoneTitle" Classes="h1" FontSize="60" LineHeight="66" Foreground="{StaticResource Brand}" Text="{local:T 'You did it!'}"/>
+                        <TextBlock x:Name="DoneText" Classes="sub" FontSize="19" LineHeight="27" Margin="0,14,0,0" Text="{local:T 'Open Ultimate MP3 Player on your iPhone and download your first song.'}"/>
+                        <Border Classes="card" Margin="0,24,0,0">
+                            <StackPanel Spacing="4">
+                                <TextBlock x:Name="DoneUntil" Classes="title"/>
+                                <TextBlock Classes="small" Foreground="{StaticResource Soft}" Text="{local:T 'Before then, come back here: one click and it\'s good for 7 more days.'}"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Classes="card" Margin="0,12,0,0">
+                            <StackPanel Spacing="4">
+                                <TextBlock Classes="title" Text="{local:T 'Know someone with an iPhone?'}"/>
+                                <TextBlock Classes="small" Foreground="{StaticResource Soft}" Text="{local:T 'You\'ve just found out it\'s easy. Send them the link: this program will walk them through it too.'}"/>
+                                <Button x:Name="ShareButton" Classes="soft" HorizontalAlignment="Left" Margin="0,10,0,0">
+                                    <StackPanel Orientation="Horizontal" Spacing="10">
+                                        <Path Classes="icon" Data="{StaticResource IconCopy}" Width="15" Height="15" VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="ShareText" Text="{local:T 'Copy the link for a friend'}"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Coming back -->
+                    <StackPanel x:Name="HomePage" IsVisible="False" VerticalAlignment="Center" Margin="0,-30,0,0">
+                        <TextBlock Classes="h1" FontSize="52" LineHeight="58" Text="{local:T 'Welcome back'}"/>
+                        <Border Classes="card" Margin="0,22,0,0">
+                            <StackPanel Spacing="3">
+                                <TextBlock x:Name="HomePhone" Classes="title" FontSize="18"/>
+                                <TextBlock x:Name="HomeState" Classes="sub" FontSize="15"/>
+                                <TextBlock x:Name="HomeExpiry" FontSize="15" FontWeight="SemiBold" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </Border>
+                        <Button x:Name="HomeButton" Classes="primary" Margin="0,22,0,0" HorizontalAlignment="Left"/>
+                        <TextBlock x:Name="HomeAccount" Classes="small" Margin="0,20,0,0"/>
+                        <StackPanel Orientation="Horizontal" Spacing="22" Margin="0,2,0,0">
+                            <Button x:Name="SignOutButton" Classes="link quiet" Content="{local:T 'Sign out of the Apple ID'}"/>
+                            <Button x:Name="RemoveButton" Classes="link quiet" Content="{local:T 'Remove everything from this computer'}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- When something goes wrong -->
+                    <StackPanel x:Name="ProblemPage" IsVisible="False" VerticalAlignment="Center" Margin="0,-30,0,0">
+                        <Path Classes="icon" Data="{StaticResource IconWarn}" Stroke="{StaticResource Warn}" Width="44" Height="44" HorizontalAlignment="Left" StrokeThickness="1.8"/>
+                        <TextBlock x:Name="ProblemTitle" Classes="h1" FontSize="38" LineHeight="44" Margin="0,18,0,0"/>
+                        <TextBlock x:Name="ProblemText" Classes="sub" Margin="0,12,0,0"/>
+                        <StackPanel Orientation="Horizontal" Spacing="14" Margin="0,26,0,0">
+                            <Button x:Name="ProblemRetry" Classes="primary" Content="{local:T 'Try again'}"/>
+                            <Button x:Name="ProblemOther" Classes="soft" Height="56" CornerRadius="28" Content="{local:T 'Use another Apple ID'}" IsVisible="False"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="22" Margin="0,18,0,0">
+                            <Button x:Name="ProblemDetails" Classes="link quiet" Content="{local:T 'Details'}"/>
+                            <Button x:Name="ProblemReport" Classes="link quiet" Content="{local:T 'Report it'}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Panel>
+
+                <Button x:Name="ToolUpdate" Grid.Row="2" Classes="link" IsVisible="False" HorizontalAlignment="Left" MaxWidth="500"/>
+            </Grid>
+        </Grid>
+
+        <local:Confetti x:Name="Party" IsHitTestVisible="False" IsVisible="False"/>
+
+        <!-- A sheet over everything, for what's worth reading only if you want to. -->
+        <Panel x:Name="Sheet" IsVisible="False" Opacity="0">
+            <Border x:Name="SheetDim" Background="#99000000"/>
+            <Border x:Name="SheetBox" Width="560" MaxHeight="600" CornerRadius="26" Background="#1B1826" BorderBrush="{StaticResource Line}" BorderThickness="1" Padding="34,30"
+                    HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 24 60 0 #80000000">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <TextBlock x:Name="SheetTitle" Classes="h1" FontSize="28" LineHeight="34"/>
+                    <ScrollViewer Grid.Row="1" Margin="0,14,0,0" MaxHeight="400">
+                        <SelectableTextBlock x:Name="SheetText" FontSize="15.5" LineHeight="23" Foreground="{StaticResource Soft}" TextWrapping="Wrap"/>
+                    </ScrollViewer>
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="12" Margin="0,22,0,0">
+                        <Button x:Name="SheetClose" Classes="soft" Content="{local:T 'Close'}"/>
+                        <Button x:Name="SheetCopy" Classes="soft" Content="{local:T 'Copy details'}" IsVisible="False"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Panel>
+    </Panel>
+</Window>

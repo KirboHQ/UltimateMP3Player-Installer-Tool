@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Installs Ultimate MP3 Player on an iPhone from a computer: one window, step by step. Windows, macOS, Linux. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>Installer</RootNamespace>
+    <AssemblyName>UltimateMP3PlayerInstaller</AssemblyName>
+    <Version>1.0.0</Version>
+    <Product>Ultimate MP3 Player Installer</Product>
+    <AssemblyTitle>Ultimate MP3 Player Installer</AssemblyTitle>
+    <Description>Installs Ultimate MP3 Player on your iPhone</Description>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <SatelliteResourceLanguages>en;it</SatelliteResourceLanguages>
+    <NoWarn>$(NoWarn);CA1416</NoWarn>
+    <!-- What a window of this size needs from a garbage collector: nothing fancy, and no second thread per core. -->
+    <ServerGarbageCollector>false</ServerGarbageCollector>
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+    <TieredPGO>false</TieredPGO>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.22" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.22" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.22" />
+    <!-- The version Avalonia.FreeDesktop is built against: a newer one renames its types and Avalonia crashes at start on Linux. -->
+    <PackageReference Include="Tmds.DBus.Protocol" Version="0.21.3" />
+    <AvaloniaResource Include="Assets\**" />
+    <InternalsVisibleTo Include="Shots" />
+  </ItemGroup>
+
+</Project>

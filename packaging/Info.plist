@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>Ultimate MP3 Player Installer</string>
+    <key>CFBundleDisplayName</key>
+    <string>Ultimate MP3 Player Installer</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.kirbohq.UltimateMP3Player.Installer</string>
+    <key>CFBundleVersion</key>
+    <string>__VERSION__</string>
+    <key>CFBundleShortVersionString</key>
+    <string>__VERSION__</string>
+    <key>CFBundleExecutable</key>
+    <string>UltimateMP3PlayerInstaller</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleIconFile</key>
+    <string>app.icns</string>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleLocalizations</key>
+    <array>
+        <string>en</string>
+        <string>it</string>
+    </array>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+</dict>
+</plist>
