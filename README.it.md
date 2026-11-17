@@ -89,8 +89,8 @@ un certificato a pagamento, quindi la prima volta il sistema potrebbe avvisarti:
 
 Avvia il setup: niente diritti di amministratore, e un'icona da cui tornare per i rinnovi. Se SmartScreen dice che non è
 riconosciuto, fai clic su **Ulteriori informazioni → Esegui comunque**. Lungo la strada il programma chiede una cosa, e
-ti ci porta: l'app **Dispositivi Apple** dal Microsoft Store (è lei che parla con il telefono). Deve essere in funzione
-perché l'iPhone venga visto, e se non lo è il programma la apre da solo. Se arrivi dalla versione 1.0, toglie il piccolo
+ti ci porta: l'app **Dispositivi Apple** dal Microsoft Store (è lei che parla con il telefono). Il suo servizio deve essere
+in funzione perché l'iPhone venga visto: se non lo è il programma lo avvia da solo, in sottofondo, e lo rispegne quando lo chiudi. Se arrivi dalla versione 1.0, toglie il piccolo
 Linux che aveva creato in WSL e, se WSL resta vuoto, chiede se disattivare anche quello.
 </details>
 

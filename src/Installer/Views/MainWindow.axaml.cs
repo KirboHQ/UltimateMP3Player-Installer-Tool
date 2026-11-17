@@ -133,8 +133,10 @@ public partial class MainWindow : Window
         Closing += (_, _) =>
         {
             _closing.Cancel();
+            if (Previewing) return;
             // (a newer version downloaded meanwhile goes in now, for the next time)
-            if (!Previewing) SelfUpdate.Apply(relaunch: false);
+            SelfUpdate.Apply(relaunch: false);
+            Setup.StopAppleDevicesIfStarted();
         };
         Activated += (_, _) => Phone.Awake = true;
         Deactivated += (_, _) => Phone.Awake = false;
@@ -235,14 +237,14 @@ public partial class MainWindow : Window
         if (!OperatingSystem.IsWindows() || _wokeAppleDevices || _page != HomePage || _chainRunning || !Setup.AppleDevicesInstalled()) return;
         _wokeAppleDevices = true;
         bool front = IsActive;
-        Setup.StartAppleDevices();
         try
         {
+            await Setup.StartAppleDevicesAsync(Ct);
             for (int i = 0; i < 40 && !await Usbmux.RunningAsync(Ct); i++) await Task.Delay(500, Ct);
         }
         catch (OperationCanceledException) { return; }
-        // (Apple Devices opens its window over this one)
-        if (front) Activate();
+        // (if it came to opening Apple Devices, its window is over this one)
+        if (front && !IsActive) Activate();
     }
 
     // shortcut: with two iPhones on the computer, the last one plugged in is the one; a chooser if anyone ever asks.
@@ -317,8 +319,8 @@ public partial class MainWindow : Window
             bool starting = OperatingSystem.IsWindows() && Setup.AppleDevicesInstalled() && !await Usbmux.RunningAsync(Ct), front = IsActive;
             if (starting) _serviceRow.Working(L.T("Starting Apple Devices"));
             await Setup.EnsurePhoneServiceAsync(Ct);
-            // (Apple Devices opens its window over this one, where the next steps are)
-            if (starting && front) Activate();
+            // (if it came to opening Apple Devices, its window is over this one, where the next steps are)
+            if (starting && front && !IsActive) Activate();
         });
         _serviceRow.Done(L.T("Ready"));
 
@@ -748,6 +750,8 @@ public partial class MainWindow : Window
 
         Phone.SetCable(_phone != null ? CableState.In : CableState.Near);
         HomeButton.IsEnabled = _phone != null;
+        // (a phone plugged in while Apple's service was off can go unseen until it's plugged in again)
+        HomeHint.IsVisible = _phone == null;
         // With SideStore, coming back here means it stopped: the button renews it and the app, and makes its pairing anew.
         HomeButton.Content = _phone == null ? L.T("Plug in your iPhone to continue")
             : record == null ? L.T("Install on this iPhone")

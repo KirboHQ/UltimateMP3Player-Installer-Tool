@@ -72,8 +72,39 @@ public static class Setup
 
     public static void OpenAppleDevicesInStore() => Open("ms-windows-store://pdp/?ProductId=9NP83LWLPZ9K");
 
-    // Its service starts with the app (or at logon, if the person left that on).
-    public static void StartAppleDevices() => Open($@"shell:AppsFolder\{AppleDevicesFamily}!App");
+    // Its service, the way Windows starts it at logon: its launcher, inside its package (run any other way, Windows refuses it). No
+    // window of Apple Devices, which would leave the person there instead of here; opening the app is the way back if this ever
+    // stops working (a renamed launcher, no PowerShell). Returns once the service answers or the app has been opened.
+    public static async Task StartAppleDevicesAsync(CancellationToken ct)
+    {
+        _startedAppleDevices = true;
+        const string launch = "$p = Get-AppxPackage AppleInc.AppleDevices; Invoke-CommandInDesktopPackage -PackageFamilyName $p.PackageFamilyName -AppId App -Command (Join-Path $p.InstallLocation 'AppleMobileDeviceLauncher.exe') -PreventBreakaway";
+        try
+        {
+            using var p = Process.Start(new ProcessStartInfo("powershell.exe") { UseShellExecute = false, CreateNoWindow = true, ArgumentList = { "-NoProfile", "-NonInteractive", "-Command", launch } });
+            for (int i = 0; i < 20; i++)
+            {
+                await Task.Delay(500, ct);
+                if (await Usbmux.RunningAsync(ct)) return;
+            }
+        }
+        catch (Exception e) when (e is not OperationCanceledException) { }
+        Open($@"shell:AppsFolder\{AppleDevicesFamily}!App");
+    }
+
+    private static bool _startedAppleDevices;
+
+    // When this program closes, the computer goes back to how it was: Apple's service off again if it was this program that started
+    // it (launcher first, or it brings the rest back). Not while Apple Devices' window is open, where it may be backing up the phone.
+    public static void StopAppleDevicesIfStarted()
+    {
+        if (!_startedAppleDevices || Process.GetProcessesByName("AppleDevices").Length > 0) return;
+        foreach (var name in new[] { "AppleMobileDeviceLauncher", "AppleMobileDeviceProcess", "AppleMobileDeviceHelper" })
+            foreach (var p in Process.GetProcessesByName(name))
+                using (p)
+                    try { p.Kill(); }
+                    catch { }
+    }
 
     // Waits for usbmuxd, starting Apple Devices when that's what brings it up. Returns when it answers; asks when it can't.
     public static async Task EnsurePhoneServiceAsync(CancellationToken ct)
@@ -82,7 +113,7 @@ public static class Setup
         if (OperatingSystem.IsMacOS()) throw new IOException("usbmuxd is not answering");
         if (OperatingSystem.IsLinux()) throw new BlockedException(Blocker.Usbmuxd);
         if (!AppleDevicesInstalled()) throw new BlockedException(Blocker.AppleDevices);
-        StartAppleDevices();
+        await StartAppleDevicesAsync(ct);
         for (int i = 0; i < 40; i++)
         {
             await Task.Delay(500, ct);

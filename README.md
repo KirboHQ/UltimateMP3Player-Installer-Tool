@@ -88,8 +88,8 @@ paid certificate, so the system may warn you the first time:
 
 Run the setup: no administrator rights, and an icon to come back to for the renewals. If SmartScreen says it's
 unrecognized, click **More info → Run anyway**. Along the way the program asks for one thing, and takes you to it: the
-**Apple Devices** app from the Microsoft Store (it's what talks to the phone). It has to be running for the iPhone to be
-seen, and the program opens it by itself when it isn't. Coming from version 1.0, it removes the small Linux it had made
+**Apple Devices** app from the Microsoft Store (it's what talks to the phone). Its service has to be running for the iPhone to
+be seen: the program starts it by itself when it isn't, in the background, and turns it off again when you close it. Coming from version 1.0, it removes the small Linux it had made
 in WSL, and if WSL is left empty it asks whether to turn it off.
 </details>
 

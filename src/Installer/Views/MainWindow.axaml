@@ -71,7 +71,7 @@
                     <StackPanel x:Name="ConnectPage" IsVisible="False" VerticalAlignment="Top" Margin="0,40,0,0">
                         <TextBlock Classes="h1" x:Name="ConnectTitle" Text="{local:T 'Plug in your iPhone'}"/>
                         <TextBlock Classes="sub" x:Name="ConnectText" Margin="0,12,0,0" Text="{local:T 'Use the cable and unlock it. I\'ll recognize it by myself.'}"/>
-                        <TextBlock x:Name="ConnectHelp" Classes="small" Margin="0,22,0,0" Text="{local:T 'Can\'t see it? Try another cable or port: some cables only charge.'}"/>
+                        <TextBlock x:Name="ConnectHelp" Classes="small" Margin="0,22,0,0" Text="{local:T 'Can\'t see it? Unplug the cable and plug it in again, with the iPhone unlocked. Still nothing: try another cable or port, some cables only charge.'}"/>
                     </StackPanel>
 
                     <!-- Who renews it -->
@@ -217,6 +217,7 @@
                             </StackPanel>
                         </Border>
                         <Button x:Name="HomeButton" Classes="primary" Margin="0,22,0,0" HorizontalAlignment="Left"/>
+                        <TextBlock x:Name="HomeHint" Classes="small" Margin="0,14,0,0" IsVisible="False" Text="{local:T 'Plugged in and not showing up? Unplug it and plug it in again, with the iPhone unlocked.'}"/>
                         <Button x:Name="HomeSideStore" Classes="link" Margin="0,12,0,0" IsVisible="False"/>
                         <TextBlock x:Name="HomeAccount" Classes="small" Margin="0,20,0,0"/>
                         <StackPanel Orientation="Horizontal" Spacing="22" Margin="0,2,0,0">

@@ -56,7 +56,8 @@ public static class L
         ["There it is: {0}"] = "Eccolo: {0}",
         ["iOS {0}"] = "iOS {0}",
         ["Connected"] = "Collegato",
-        ["Can't see it? Try another cable or port: some cables only charge."] = "Non lo vedo? Prova un altro cavo o un'altra porta: alcuni cavi caricano soltanto.",
+        ["Can't see it? Unplug the cable and plug it in again, with the iPhone unlocked. Still nothing: try another cable or port, some cables only charge."] = "Non lo vedo? Stacca il cavo e riattaccalo, con l'iPhone sbloccato. Se ancora niente, prova un altro cavo o un'altra porta: alcuni cavi caricano soltanto.",
+        ["Plugged in and not showing up? Unplug it and plug it in again, with the iPhone unlocked."] = "È collegato ma non compare? Staccalo e riattaccalo, con l'iPhone sbloccato.",
         // Who renews it
         ["Who renews it?"] = "Chi la rinnova?",
         ["Apple keeps an app signed with a free Apple ID working for 7 days, then it has to be renewed."] = "Apple fa funzionare per 7 giorni un'app firmata con un Apple ID gratuito, poi va rinnovata.",
