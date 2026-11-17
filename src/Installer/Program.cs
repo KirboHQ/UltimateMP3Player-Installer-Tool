@@ -8,8 +8,6 @@ internal static class Program
     [STAThread]
     public static int Main(string[] args)
     {
-        // One connection of xtool to the phone (Relay): no window, nothing of Avalonia loaded, as quick as it can start.
-        if (args is ["--usbmux"]) return Relay.Run();
         if (args is ["--uninstall"])
         {
             // Asked by Windows' uninstaller (packaging/installer.iss): whatever goes wrong here must not stop it.

@@ -3,7 +3,7 @@
 
 #define AppName "Ultimate MP3 Player Installer"
 #ifndef AppVersion
-  #define AppVersion "1.0.2"
+  #define AppVersion "1.1.0"
 #endif
 #define AppExe "UltimateMP3PlayerInstaller.exe"
 
@@ -19,7 +19,7 @@ DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
-; (WSL 2 itself asks for this build)
+; (Windows 10 version 2004, kept from when WSL 2 needed it: nothing older has been tried)
 MinVersion=10.0.19041
 OutputDir=..\out
 ; The README's download button relies on this name.
@@ -53,6 +53,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 Source: "..\out\bin\{#AppExe}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\out\bin\ump-helper.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\LICENSE"; DestDir: "{app}\licenses"; DestName: "LICENSE.txt"; Flags: ignoreversion
 Source: "..\licenses\*"; DestDir: "{app}\licenses"; Flags: ignoreversion
 
@@ -62,7 +63,15 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopico
 
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent
+; The program updating itself (Engine/SelfUpdate.cs: silent, /relaunch=1 for "restart now"): open again, the new version.
+Filename: "{app}\{#AppExe}"; Flags: nowait; Check: IsRelaunch
 
 [UninstallRun]
-; The private Linux, with the sign-in inside it, and everything downloaded: uninstalling leaves nothing behind.
+; The sign-in, everything downloaded, and the private Linux an older version made: uninstalling leaves nothing behind.
 Filename: "{app}\{#AppExe}"; Parameters: "--uninstall"; RunOnceId: "RemoveEverything"; Flags: runhidden waituntilterminated
+
+[Code]
+function IsRelaunch: Boolean;
+begin
+  Result := ExpandConstant('{param:relaunch|0}') = '1';
+end;

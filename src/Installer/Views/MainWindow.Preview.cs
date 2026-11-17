@@ -13,6 +13,7 @@ public partial class MainWindow
         _appleId = "name@example.com";
         _release = new IpaRelease("5.1.1", "", 0, null);
         Sheet.IsVisible = false;
+        Party.IsVisible = false;
         Phone.SetCable(CableState.Away);
         Phone.LockHintShown(true);
         PhoneView.GuideFrame = 0;
@@ -33,16 +34,15 @@ public partial class MainWindow
                 Phone.ShowShot(1);
                 BlockerCard.IsVisible = false;
                 _serviceRow.Done(L.T("Ready"));
-                _engineRow.Working(L.T("Downloading the signing engine"), 0.62);
-                _appRow.Waiting();
+                _appRow.Working(L.F("Downloading version {0}", "5.1.1"), 0.62);
                 break;
             case "blocker":
                 Go(ComputerPage, 1, Blue);
                 Phone.Show(Scene.Showcase);
                 Phone.ShowShot(2);
-                _ = SolveAsync(new BlockedException(Blocker.WslConsent, "ask"));
-                _serviceRow.Done(L.T("Ready"));
-                _engineRow.Working(L.T("Checking"));
+                _ = SolveAsync(new BlockedException(Blocker.AppleDevices));
+                _serviceRow.Working(L.T("Checking"));
+                _appRow.Waiting();
                 break;
             case "connect":
                 ConnectHelp.IsVisible = true;
@@ -60,6 +60,11 @@ public partial class MainWindow
                 Phone.SetCable(CableState.In);
                 Phone.Say(L.T("Connected"));
                 break;
+            case "choice":
+                Go(ChoicePage, 2, Cyan);
+                Phone.Show(Scene.Home);
+                Phone.SetCable(CableState.In);
+                break;
             case "account":
                 AccountError.IsVisible = false;
                 Go(AccountPage, 3, Purple);
@@ -68,9 +73,7 @@ public partial class MainWindow
                 Phone.SetCable(CableState.In);
                 break;
             case "account-error":
-                var advice = Errors.For("Error: -80045");
-                AccountError.Text = advice.Title + ". " + advice.Body;
-                AccountError.IsVisible = true;
+                ShowAccountError(Errors.For("Error: -80045"));
                 EmailBox.Text = "name@example.com";
                 Go(AccountPage, 3, Purple);
                 Phone.Show(Scene.Lock);
@@ -117,6 +120,35 @@ public partial class MainWindow
                 Phone.SetCable(CableState.In);
                 Phone.Installing(0.24);
                 break;
+            case "moving":
+                PhoneRequestCard.IsVisible = ConfirmCard.IsVisible = false;
+                InstallTitle.Text = L.T("Updating the app");
+                InstallPercent.Text = "100%";
+                InstallBar.Set(1);
+                InstallStage.Text = L.F("Moving your music to the new version: {0}%", 42);
+                Go(InstallPage, 0, Pink);
+                Phone.Show(Scene.Home);
+                Phone.SetCable(CableState.In);
+                Phone.Installing(1);
+                break;
+            case "install-sidestore":
+                PhoneRequestCard.IsVisible = ConfirmCard.IsVisible = false;
+                InstallTitle.Text = L.T("Installing SideStore");
+                InstallPercent.Text = "81%";
+                InstallBar.Set(0.81);
+                InstallStage.Text = L.T("Signing the app with your Apple ID");
+                Go(InstallPage, 4, Pink);
+                Phone.Show(Scene.Home);
+                Phone.SetCable(CableState.In);
+                Phone.Installing(1);
+                break;
+            case "sidestore":
+            case "sidestore2":
+            case "sidestore3":
+                PhoneView.GuideFrame = name == "sidestore3" ? 1 : 0;
+                Go(SideStorePage, 5, Amber);
+                ShowHandOver(name switch { "sidestore2" => 1, "sidestore3" => 2, _ => 0 });
+                break;
             case "activate":
             case "activate2":
             case "activate3":
@@ -148,6 +180,11 @@ public partial class MainWindow
                 Phone.SetCable(CableState.In);
                 Party.At(1.7);
                 break;
+            case "done-sidestore":
+                ShowDone(false, false, sideStore: true, handedOver: true);
+                Phone.SetCable(CableState.In);
+                Party.At(0.75);
+                break;
             case "home":
                 _memory.Phones["test"] = new Memory.PhoneRecord { Version = "5.1.0", InstalledUtc = DateTime.UtcNow.AddDays(-5) };
                 ShowHome();
@@ -159,6 +196,18 @@ public partial class MainWindow
                 _memory.Phones["test"] = new Memory.PhoneRecord { Version = "5.1.1", InstalledUtc = DateTime.UtcNow.AddDays(-6.5) };
                 ShowHome();
                 Phone.ShowShot(2);
+                break;
+            case "home-wsl":
+                _memory.Phones["test"] = new Memory.PhoneRecord { Version = "5.1.1", InstalledUtc = DateTime.UtcNow.AddDays(-1) };
+                _memory.WslLeftover = true;
+                ShowHome();
+                Phone.ShowShot(3);
+                break;
+            case "home-sidestore":
+                _memory.Phones["test"] = new Memory.PhoneRecord { Version = "5.1.1", InstalledUtc = DateTime.UtcNow.AddDays(-12), SideStore = true };
+                _memory.WslLeftover = false;
+                ShowHome();
+                Phone.ShowShot(3);
                 break;
             case "problem":
                 ShowProblem("Error: 0xe8008024 profile is banned");

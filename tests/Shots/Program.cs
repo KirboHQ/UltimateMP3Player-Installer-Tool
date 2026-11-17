@@ -19,46 +19,32 @@ void Check(bool ok, string what)
     Console.WriteLine("WRONG: " + what);
 }
 
-// ---- What xtool prints
+// ---- What the helper says
 
-List<Out> Feed(params string[] chunks)
-{
-    var parser = new XtoolParser();
-    var all = chunks.SelectMany(parser.Feed).ToList();
-    all.AddRange(parser.End());
-    return all;
-}
-
-var stages = Feed("\n[Signing]   8%", "\r[Signing]  42%", "\r[Signing] 100%\n[Uploading] ...\n");
-Check(stages.Count == 4, "stages seen one by one, also before their \\r: " + stages.Count);
-Check(stages[1] is { Kind: OutKind.Stage, Text: "Signing", Percent: 0.42 }, "a stage and its percent");
-Check(stages[3] is { Kind: OutKind.Stage, Text: "Uploading", Percent: null }, "a stage without a percent");
-
-var login = Feed("Heads up:\n  This works by emulating a virtual Mac\n", "Apple ID: ");
-Check(login.Count == 3 && login[2] is { Kind: OutKind.Prompt, Prompt: PromptKind.AppleId }, "a question without a newline fires at once");
-Check(Feed("Password: ").Count == 1, "a question isn't told twice when its line ends");
-Check(Feed("Code: ")[0].Prompt == PromptKind.Code, "the code");
-Check(Feed("Continue? (yes/no): ")[0].Prompt == PromptKind.Confirm, "a yes or no");
-Check(Feed("0: A (X)\n1: B (Y)\nChoice (0-1): ")[2].Prompt == PromptKind.Choice, "a choice");
-var trust = Feed("\nPlease tap 'trust' on your device...", "\nContinuing...");
-Check(trust.Count == 2 && trust[0].Text.StartsWith("Please tap") && trust[1].Text.StartsWith("Continuing"), "what it asks of the phone, without waiting for a newline");
-Check(Feed("Some line\nError: x")[1].Text == "Error: x", "a last line without a newline");
-Check(Feed("Installing to device: [iPhone] (udid: 1)\n")[0].Kind == OutKind.Line, "brackets inside a line aren't a stage");
+var said = HelperEvent.Parse("""{"event":"stage","stage":"Signing","progress":0.42}""");
+Check(said is { Event: "stage" } && said.Text("stage") == "Signing" && said.Number("progress") == 0.42, "a stage and how far it is");
+Check(HelperEvent.Parse("""{"event":"phone","what":"trust"}""")?.Phone == PhoneRequest.Trust, "what it asks of the phone");
+Check(HelperEvent.Parse("""{"event":"done","moved":true}""")?.Flag("moved") == true, "a yes");
+Check(HelperEvent.Parse("2026-11-17T13:16:41Z  INFO isideload: Loaded") == null && HelperEvent.Parse("[1,2]") == null, "a line that isn't an event is passed over");
 
 // ---- How far it is
 
-var order = new[] { "Unpacking app", "Preparing device", "Provisioning", "Signing", "Packaging", "Connecting", "Uploading", "Installing" };
 double last = -1;
-foreach (var s in order)
+foreach (var (stage, part) in new[] { ("Preparing", 0.0), ("Preparing", 1.0), ("Signing", 0.1), ("Signing", 0.5), ("Installing", 0.2), ("Installing", 0.9), ("Installing", 1.0) })
 {
-    var (friendly, start) = Progress.Of(s, 0);
-    var (_, end) = Progress.Of(s, 1);
-    Check(friendly != null, "a name for " + s);
-    Check(start >= last && end > start, "progress only goes forward: " + s);
-    last = end;
+    var (friendly, overall) = Progress.Of(stage, part);
+    Check(friendly != null, "a name for " + stage);
+    Check(overall >= last, $"progress only goes forward: {stage} {part}");
+    last = overall;
 }
 Check(Math.Abs(last - 1) < 1e-9, "it ends at 100%");
 Check(Progress.Of("Something new", 0.5).Friendly == null, "an unknown stage says nothing rather than something wrong");
+Check(Progress.Of("Pairing", 0).Friendly != null && Progress.Of("Pairing", 0.5).Overall == 1, "SideStore's pairing has a name, and once placed it's the end");
+
+// ---- What the camera opens
+
+const string source = "https://github.com/KirboHQ/UltimateMP3Player/releases/latest/download/sidestore-source.json";
+Check(Releases.SideStoreSourceLink == "sidestore://source?url=" + Uri.EscapeDataString(source), "the code adds the app's own source to SideStore");
 
 // ---- What went wrong
 
@@ -67,25 +53,30 @@ Check(Errors.For("Error: 0xe8008024").Other == L.T("Use another Apple ID"), "an 
 Check(Errors.For("Your session has expired. Please log in.").Other == L.T("Sign in again"), "an expired session leads to signing in");
 Check(Errors.For("No such host is known. (github.com:443)").Title == L.T("No internet connection"), "no internet");
 Check(Errors.For("Something 15030 happened").Title == L.T("Something didn't work"), "a number that merely contains 503 is not Apple refusing");
-Check(Errors.For("HTTPClientError.deadlineExceeded").Title == L.T("I can't reach the signing service"), "the service down");
+Check(Errors.For("Failed to provision with the anisette server").Title == L.T("I can't reach the signing service"), "the service down");
 Check(Errors.For("nothing known here").Title == L.T("Something didn't work"), "anything else");
+Check(Errors.For("Auth error -22406: Enter the correct password for this Apple Account.").Title == L.T("Wrong email or password"), "a wrong password, as the helper says it");
+Check(Errors.For("error sending request for url (https://developerservices2.apple.com/x): client error (Connect): tcp connect error").Title == L.T("I can't reach the signing service"), "Apple out of reach");
+Check(Errors.For("\n ● device not found\n").Title == L.T("I lost your iPhone"), "the phone gone");
+Check(Errors.For(" ● Failed to parse URL Bag plist\n ● Serde(\"invalid type: string \\\"Threads\\\", expected a map\")").Title == L.T("I can't reach the signing service"), "Apple's first answer garbled");
+Check(Errors.For("tcp connect error").AppleSide && Errors.For("Error: -80045").AppleSide && !Errors.For("-22406").AppleSide && !Errors.For("device not found").AppleSide, "Apple's status page offered only when it may be Apple's sign-in that's down");
+Check(Errors.For("Not signed in").Other == L.T("Sign in again"), "no sign-in kept");
 
-// ---- Versions and paths
+// ---- Versions
 
 Check(Releases.IsNewer("5.1.1", "5.1.0") && !Releases.IsNewer("5.1.0", "5.1.1") && !Releases.IsNewer("5.1.0", "5.1.0"), "newer versions");
 Check(Releases.IsNewer("5.10.0", "5.9.9"), "versions are numbers, not text");
-Check(Setup.ToLinuxPath(@"C:\Users\Some One\x.ipa") == "/mnt/c/Users/Some One/x.ipa", "a Windows path in Linux");
-Check(!Setup.WslArgs("sh", "-c", "set -e\r\ncd /\r\n").Any(a => a.Contains('\r')), "a script reaches Linux with Linux's line endings, whatever the checkout has");
-const string noVmService = "Wsl/Service/RegisterDistro/CreateVm/HCS/HCS_E_SERVICE_NOT_AVAILABLE";
-Check(Setup.WslFailure(noVmService, platform: false) is BlockedException { Blocker: Blocker.WslConsent, Message: "ask" }, "the platform missing leads to asking to turn it on");
-Check(Setup.WslFailure(noVmService, platform: true) is BlockedException { Blocker: Blocker.Virtualization }, "the platform there and still no service leads to the BIOS, not round again");
-string tools = Path.Combine(folder, "tools");
-Directory.CreateDirectory(tools);
-File.Delete(Path.Combine(tools, "unzip"));
-File.WriteAllText(Path.Combine(tools, "zip"), "");
-Check(!Setup.HasZipTools(tools), "zip alone isn't enough");
-File.WriteAllText(Path.Combine(tools, "unzip"), "");
-Check(Setup.HasZipTools("nowhere" + Path.PathSeparator + tools), "zip and unzip found along the path");
+
+// ---- This program updating itself: never a build from the sources
+
+Check(!SelfUpdate.CanUpdate, "a build from the sources doesn't replace itself");
+Check(SelfUpdate.Asset.StartsWith("UltimateMP3Player-Installer-") && File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", ".github", "workflows", "release.yml")).Contains(SelfUpdate.Asset), "it looks for the package release.yml makes for this system");
+
+// ---- The helper beside the program (built in helper/ with cargo build --release, copied by Installer.csproj)
+
+Check(File.Exists(HelperRun.Exe), "the helper is beside the program: build it in helper/ with cargo build --release");
+if (File.Exists(HelperRun.Exe))
+    Check(await Helper.AccountAsync(CancellationToken.None) == null, "the helper answers, and in a new folder nobody is signed in");
 
 // ---- A file that's half or wrong never gets used
 
@@ -115,7 +106,7 @@ if (perf) builder.UsePlatformDetect().SetupWithoutStarting();
 else builder.UseSkia().UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false }).SetupWithoutStarting();
 
 MainWindow.Previewing = true;
-var names = new[] { "welcome", "why", "computer", "blocker", "connect", "connected", "account", "account-error", "code", "code2", "install", "install-trust", "install-confirm", "activate", "activate2", "activate3", "activate4", "trust", "trust3", "done", "renewed", "home", "home-away", "problem" };
+var names = new[] { "welcome", "why", "computer", "blocker", "connect", "connected", "choice", "account", "account-error", "code", "code2", "install", "install-trust", "install-confirm", "moving", "install-sidestore", "activate", "activate2", "activate3", "activate4", "trust", "trust3", "sidestore", "sidestore2", "sidestore3", "done", "renewed", "done-sidestore", "home", "home-away", "home-wsl", "home-sidestore", "problem" };
 
 if (perf)
 {
@@ -124,6 +115,8 @@ if (perf)
     Environment.Exit(wrong == 0 ? 0 : 1);
 }
 
+// SHOTS_SCALE=2: the pictures at twice the size, for the README (tests/Shots/readme.py), the window drawn again into a bigger one.
+double scale = double.TryParse(Environment.GetEnvironmentVariable("SHOTS_SCALE"), System.Globalization.CultureInfo.InvariantCulture, out var s) ? s : 1;
 Motion.Instant = true;
 var window = new MainWindow();
 window.Show();
@@ -133,7 +126,14 @@ foreach (var name in names)
     Dispatcher.UIThread.RunJobs();
     AvaloniaHeadlessPlatform.ForceRenderTimerTick();
     Dispatcher.UIThread.RunJobs();
-    var frame = window.CaptureRenderedFrame();
+    Avalonia.Media.Imaging.Bitmap? frame;
+    if (scale == 1) frame = window.CaptureRenderedFrame();
+    else
+    {
+        var big = new Avalonia.Media.Imaging.RenderTargetBitmap(new PixelSize((int)(window.ClientSize.Width * scale), (int)(window.ClientSize.Height * scale)), new Vector(96 * scale, 96 * scale));
+        big.Render(window);
+        frame = big;
+    }
     Check(frame != null, "a picture of " + name);
     frame?.Save(Path.Combine(folder, "shots", name + ".png"));
 }

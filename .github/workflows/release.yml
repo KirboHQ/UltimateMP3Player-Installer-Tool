@@ -17,7 +17,8 @@ jobs:
       matrix:
         include:
           - { runner: windows-latest, rid: win-x64, asset: UltimateMP3Player-Installer-windows-x64-setup.exe }
-          - { runner: ubuntu-latest, rid: linux-x64, asset: UltimateMP3Player-Installer-linux-x64.tar.gz }
+          # (an older Ubuntu on purpose: the helper needs at least the glibc it's built with, and this one reaches Debian 12 too)
+          - { runner: ubuntu-22.04, rid: linux-x64, asset: UltimateMP3Player-Installer-linux-x64.tar.gz }
           - { runner: macos-latest, rid: osx-arm64, asset: UltimateMP3Player-Installer-macos-arm64.zip }
     runs-on: ${{ matrix.runner }}
     defaults:
@@ -34,13 +35,21 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      # What xtool prints, what went wrong, downloads, and every screen drawn once. One system is enough: none of it depends on it.
+      # The helper that signs and installs, for this same system; Installer.csproj puts it beside the program. Exactly the
+      # libraries of Cargo.lock.
+      - name: Helper
+        run: |
+          rustup update stable --no-self-update
+          rustup default stable
+          cargo build --release --locked --manifest-path helper/Cargo.toml
+
+      # What the helper says, what went wrong, downloads, and every screen drawn once. One system is enough: none of it depends on it.
       - name: Checks
         if: runner.os == 'Windows'
         run: dotnet run --project tests/Shots -c Release -- "$RUNNER_TEMP/shots"
 
       # Trimmed, and not compressed inside: the setup or the archive around it does better (measured: 55 MB, 24 in a zip against 29
-      # compressed), and it starts faster each time the bridge to the iPhone runs it (50 ms against 67).
+      # compressed), and it starts faster. The helper lands beside it in out/bin.
       - name: Publish
         run: |
           VERSION="${TAG#v}"
@@ -66,19 +75,21 @@ jobs:
             linux-*)
               DIR=out/pack/UltimateMP3Player-Installer
               mkdir -p "$DIR"
-              cp out/bin/UltimateMP3PlayerInstaller LICENSE "$DIR/"
+              cp out/bin/UltimateMP3PlayerInstaller out/bin/ump-helper LICENSE "$DIR/"
               cp -R licenses "$DIR/"
-              chmod +x "$DIR/UltimateMP3PlayerInstaller"
+              chmod +x "$DIR/UltimateMP3PlayerInstaller" "$DIR/ump-helper"
               tar -C out/pack -czf "out/$ASSET" UltimateMP3Player-Installer
               ;;
             osx-*)
               APP="out/pack/Ultimate MP3 Player Installer.app"
               mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-              cp out/bin/UltimateMP3PlayerInstaller "$APP/Contents/MacOS/"
+              cp out/bin/UltimateMP3PlayerInstaller out/bin/ump-helper "$APP/Contents/MacOS/"
               cp packaging/app.icns LICENSE "$APP/Contents/Resources/"
               cp -R licenses "$APP/Contents/Resources/"
               sed "s/__VERSION__/$VERSION/g" packaging/Info.plist > "$APP/Contents/Info.plist"
-              # No Apple certificate, but without any signature Apple Silicon Macs don't run it at all.
+              # No Apple certificate, but without any signature Apple Silicon Macs don't run it at all. The helper first, on its own,
+              # then the bundle around it.
+              codesign --force -s - "$APP/Contents/MacOS/ump-helper"
               codesign --force --deep -s - "$APP"
               ditto -c -k --sequesterRsrc --keepParent "$APP" "out/$ASSET"
               ;;

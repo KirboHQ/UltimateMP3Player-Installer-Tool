@@ -74,6 +74,31 @@
                         <TextBlock x:Name="ConnectHelp" Classes="small" Margin="0,22,0,0" Text="{local:T 'Can\'t see it? Try another cable or port: some cables only charge.'}"/>
                     </StackPanel>
 
+                    <!-- Who renews it -->
+                    <StackPanel x:Name="ChoicePage" IsVisible="False" VerticalAlignment="Top" Margin="0,40,0,0">
+                        <TextBlock Classes="h1" Text="{local:T 'Who renews it?'}"/>
+                        <TextBlock Classes="sub" Margin="0,12,0,0" Text="{local:T 'Apple keeps an app signed with a free Apple ID working for 7 days, then it has to be renewed.'}"/>
+                        <Button x:Name="ChooseCable" Classes="choice" Margin="0,24,0,0">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Classes="title" Text="{local:T 'This computer, by cable'}"/>
+                                    <TextBlock Classes="small" Foreground="{StaticResource Soft}" Text="{local:T 'Every 7 days, plug in the iPhone and click Renew here. Nothing else to install.'}"/>
+                                </StackPanel>
+                                <Path Grid.Column="1" Classes="icon" Data="{StaticResource IconChevron}" Stroke="{StaticResource Faint}" Width="16" Height="16" Margin="14,0,0,0" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Button>
+                        <Button x:Name="ChooseSideStore" Classes="choice" Margin="0,12,0,0">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Classes="title" Text="{local:T 'The iPhone by itself, with SideStore'}"/>
+                                    <TextBlock Classes="small" Foreground="{StaticResource Soft}" Text="{local:T 'A few more taps on the iPhone today. Then SideStore renews it over Wi-Fi, and brings the updates too.'}"/>
+                                </StackPanel>
+                                <Path Grid.Column="1" Classes="icon" Data="{StaticResource IconChevron}" Stroke="{StaticResource Faint}" Width="16" Height="16" Margin="14,0,0,0" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Button>
+                        <TextBlock Classes="small" Margin="0,16,0,0" Text="{local:T 'You can switch to SideStore later too, from here.'}"/>
+                    </StackPanel>
+
                     <!-- The Apple ID -->
                     <StackPanel x:Name="AccountPage" IsVisible="False" VerticalAlignment="Top" Margin="0,40,0,0">
                         <TextBlock Classes="h1" Text="{local:T 'Sign in with your Apple ID'}"/>
@@ -83,6 +108,7 @@
                             <TextBox x:Name="PasswordBox" Classes="field" Watermark="{local:T 'Password'}" PasswordChar="•"/>
                         </StackPanel>
                         <TextBlock x:Name="AccountError" Classes="sub" FontSize="14.5" LineHeight="21" Foreground="{StaticResource Bad}" Margin="0,12,0,0" IsVisible="False"/>
+                        <Button x:Name="AccountStatus" Classes="link" Margin="0,6,0,0" IsVisible="False" Content="{local:T 'Is Apple\'s sign-in down? Check its status page'}"/>
                         <StackPanel Orientation="Horizontal" Spacing="16" Margin="0,18,0,0">
                             <Button x:Name="LoginButton" Classes="primary" Content="{local:T 'Continue'}"/>
                             <local:Spinner x:Name="LoginSpinner" IsVisible="False" VerticalAlignment="Center"/>
@@ -142,6 +168,20 @@
                         </StackPanel>
                     </StackPanel>
 
+                    <!-- SideStore takes over -->
+                    <StackPanel x:Name="SideStorePage" IsVisible="False" VerticalAlignment="Top" Margin="0,40,0,0">
+                        <TextBlock Classes="h1" Text="{local:T 'Last, on the iPhone'}"/>
+                        <TextBlock Classes="sub" Margin="0,12,0,0" Text="{local:T 'Only once. Follow the phone beside this text.'}"/>
+                        <StackPanel x:Name="SideStoreCards" Margin="0,22,0,0" Spacing="10"/>
+                        <Grid ColumnDefinitions="Auto,*" Margin="0,18,0,0">
+                            <local:QrCode x:Name="SideStoreQr" Width="132" Height="132" Margin="0,0,18,0" VerticalAlignment="Top"/>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="12">
+                                <TextBlock x:Name="SideStoreScan" Classes="small" Text="{local:T 'Point the iPhone\'s camera at this code, then tap the yellow button that comes up.'}"/>
+                                <Button x:Name="SideStoreNext" Classes="primary" HorizontalAlignment="Left" Content="{local:T 'Done, next'}"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+
                     <!-- Done -->
                     <StackPanel x:Name="DonePage" IsVisible="False" VerticalAlignment="Center" Margin="0,-30,0,0">
                         <TextBlock x:Name="DoneTitle" Classes="h1" FontSize="60" LineHeight="66" Foreground="{StaticResource Brand}" Text="{local:T 'You did it!'}"/>
@@ -149,7 +189,7 @@
                         <Border Classes="card" Margin="0,24,0,0">
                             <StackPanel Spacing="4">
                                 <TextBlock x:Name="DoneUntil" Classes="title"/>
-                                <TextBlock Classes="small" Foreground="{StaticResource Soft}" Text="{local:T 'Before then, come back here: one click and it\'s good for 7 more days.'}"/>
+                                <TextBlock x:Name="DoneHint" Classes="small" Foreground="{StaticResource Soft}"/>
                             </StackPanel>
                         </Border>
                         <Border Classes="card" Margin="0,12,0,0">
@@ -177,11 +217,22 @@
                             </StackPanel>
                         </Border>
                         <Button x:Name="HomeButton" Classes="primary" Margin="0,22,0,0" HorizontalAlignment="Left"/>
+                        <Button x:Name="HomeSideStore" Classes="link" Margin="0,12,0,0" IsVisible="False"/>
                         <TextBlock x:Name="HomeAccount" Classes="small" Margin="0,20,0,0"/>
                         <StackPanel Orientation="Horizontal" Spacing="22" Margin="0,2,0,0">
                             <Button x:Name="SignOutButton" Classes="link quiet" Content="{local:T 'Sign out of the Apple ID'}"/>
                             <Button x:Name="RemoveButton" Classes="link quiet" Content="{local:T 'Remove everything from this computer'}"/>
                         </StackPanel>
+                        <Border x:Name="WslCard" Classes="card" Margin="0,22,0,0" IsVisible="False">
+                            <StackPanel Spacing="10">
+                                <TextBlock Classes="title" Text="{local:T 'WSL isn\'t needed anymore'}"/>
+                                <TextBlock Classes="sub" FontSize="14.5" LineHeight="21" Text="{local:T 'The older version used it, and nothing else is in it now. If no other program needs it or the Virtual Machine Platform (some Android emulators do), I can turn both off: Windows asks your permission, and they go at the next restart.'}"/>
+                                <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,6,0,0">
+                                    <Button x:Name="WslRemove" Classes="soft" Content="{local:T 'Turn them off'}"/>
+                                    <Button x:Name="WslKeep" Classes="soft" Content="{local:T 'Keep them'}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
 
                     <!-- When something goes wrong -->
@@ -189,6 +240,7 @@
                         <Path Classes="icon" Data="{StaticResource IconWarn}" Stroke="{StaticResource Warn}" Width="44" Height="44" HorizontalAlignment="Left" StrokeThickness="1.8"/>
                         <TextBlock x:Name="ProblemTitle" Classes="h1" FontSize="38" LineHeight="44" Margin="0,18,0,0"/>
                         <TextBlock x:Name="ProblemText" Classes="sub" Margin="0,12,0,0"/>
+                        <Button x:Name="ProblemStatus" Classes="link" Margin="0,8,0,0" IsVisible="False" Content="{local:T 'Is Apple\'s sign-in down? Check its status page'}"/>
                         <StackPanel Orientation="Horizontal" Spacing="14" Margin="0,26,0,0">
                             <Button x:Name="ProblemRetry" Classes="primary" Content="{local:T 'Try again'}"/>
                             <Button x:Name="ProblemOther" Classes="soft" Height="56" CornerRadius="28" Content="{local:T 'Use another Apple ID'}" IsVisible="False"/>
@@ -203,6 +255,9 @@
                 <Button x:Name="ToolUpdate" Grid.Row="2" Classes="link" IsVisible="False" HorizontalAlignment="Left" MaxWidth="500"/>
             </Grid>
         </Grid>
+
+        <!-- Where the title bar would be: the window reaches up under it, so this is what drags it. -->
+        <Border x:Name="DragStrip" Height="38" VerticalAlignment="Top" Background="Transparent"/>
 
         <local:Confetti x:Name="Party" IsHitTestVisible="False" IsVisible="False"/>
 

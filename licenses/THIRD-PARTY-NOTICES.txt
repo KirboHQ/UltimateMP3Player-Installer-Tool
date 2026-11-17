@@ -38,6 +38,10 @@ ANGLE, in Avalonia.Angle.Windows.Natives (Windows)
   License: BSD 3-Clause, text at the end. Copyright 2018 The ANGLE Project Authors.
   Source: https://chromium.googlesource.com/angle/angle
 
+QRCoder 1.8.1
+  License: MIT, text at the end. Copyright (c) 2013-2025 Raffael Herrmann. Copyright (c) 2024-2025 Shane Krueger.
+  Source: https://github.com/Shane32/QRCoder
+
 Tmds.DBus.Protocol 0.21.3 (Linux)
   License: MIT, text at the end. Copyright 2006 Alp Toker <alp@atoker.com>. Copyright 2010 Other Contributors.
   Copyright 2016 Tom Deseyn <tom.deseyn@gmail.com>.
@@ -49,26 +53,40 @@ Selawik (font; on Linux and macOS)
   Source: https://github.com/microsoft/Selawik
 
 
+THE HELPER BESIDE THE PROGRAM
+-----------------------------
+
+ump-helper, the separate program that signs the app and installs it on the iPhone, is part of this project (helper/ in
+the source code) and is built from the Rust libraries below. Every one of them, with its license and its own notices:
+Helper-THIRD-PARTY-NOTICES.txt.
+
+isideload 0.5.2, which signs the app with the Apple ID
+  License: MIT, text at the end. Copyright (c) Nicholas Sharp.
+  Source: https://github.com/nab138/isideload
+
+idevice 0.1.68, which talks to the iPhone
+  License: MIT, text at the end. Copyright (c) Jackson Coxson.
+  Source: https://github.com/jkcoxson/idevice
+
+apple-codesign-quick 0.1.0, inside isideload
+  License: GNU Lesser General Public License 2.1 or later, LGPL-2.1.txt.
+  Source: https://github.com/Dadoum/apple-crates
+  The helper's whole source is in this program's repository, so it can be built again with a changed version of it.
+
+The Rust standard library
+  License: MIT, text at the end (or Apache 2.0). Copyright (c) The Rust Project Developers.
+  Source: https://github.com/rust-lang/rust
+
+
 DOWNLOADED WHEN NEEDED
 ----------------------
 
-They aren't in the packages: the program downloads the exact versions it knows, from their own projects, and checks each
-file's hash.
-
-xtool 1.24.0, which signs and installs the app (a separate program this one starts)
-  License: MIT, text at the end. Copyright (c) 2021 Kabir Oberai.
-  Source: https://github.com/xtool-org/xtool
-
-Ubuntu Base 24.04.5 (Windows: the private Linux that xtool runs in)
-  Licenses: each package its own, listed inside it in /usr/share/doc/<package>/copyright.
-  Source: https://cdimage.ubuntu.com/ubuntu-base/releases/24.04/release/, https://packages.ubuntu.com/noble/
-
-zip 3.0 and unzip 6.0, Ubuntu's packages (Windows: with them xtool opens the app and closes it again, in the private Linux)
-  License: Info-ZIP, inside each in /usr/share/doc/<package>/copyright.
-  Source: https://packages.ubuntu.com/noble/zip, https://packages.ubuntu.com/noble/unzip
-
-Ultimate MP3 Player, the iPhone app itself
+Ultimate MP3 Player, the iPhone app itself: its latest release, from GitHub.
   License: GNU General Public License version 3. Source: https://github.com/KirboHQ/UltimateMP3Player
+
+SideStore 0.7.0-alpha, only when the iPhone is to renew the app by itself: that exact file, checked against its hash, and
+installed unchanged but for the signature.
+  License: GNU Affero General Public License version 3. Source: https://github.com/SideStore/SideStore
 
 
 LICENSE TEXTS

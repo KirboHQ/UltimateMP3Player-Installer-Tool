@@ -167,6 +167,31 @@
             <Setter Property="Opacity" Value="0.4"/>
         </Style>
 
+        <!-- A card to pick: the whole of it is the button. -->
+        <Style Selector="Button.choice">
+            <Setter Property="Background" Value="{StaticResource Fill}"/>
+            <Setter Property="Padding" Value="20,18"/>
+            <Setter Property="CornerRadius" Value="18"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Panel>
+                        <Border x:Name="Back" Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}"/>
+                        <Border x:Name="Ring" BorderBrush="White" BorderThickness="2" CornerRadius="{TemplateBinding CornerRadius}" Margin="-3" IsVisible="False"/>
+                        <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" Padding="{TemplateBinding Padding}"
+                                          HorizontalContentAlignment="Stretch" VerticalContentAlignment="Center" RecognizesAccessKey="False"/>
+                    </Panel>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="Button.choice:pointerover /template/ Border#Back">
+            <Setter Property="Background" Value="{StaticResource FillHover}"/>
+        </Style>
+        <Style Selector="Button.choice:focus-visible /template/ Border#Ring">
+            <Setter Property="IsVisible" Value="True"/>
+        </Style>
+
         <Style Selector="Button.link">
             <Setter Property="Foreground" Value="{StaticResource Link}"/>
             <Setter Property="FontSize" Value="14"/>

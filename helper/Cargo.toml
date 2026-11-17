@@ -1,0 +1,28 @@
+[package]
+name = "ump-helper"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+# Exact versions: this program hands them an Apple password, so nothing moves without a decision (the same ones iloader 2.4.1
+# ships). idevice without its default features: ring, as isideload asks, instead of aws-lc and its extra build tools.
+[dependencies]
+isideload = { version = "=0.5.2", default-features = false, features = ["install", "fs-storage", "tokio-mt"] }
+idevice = { version = "=0.1.68", default-features = false, features = ["ring", "usbmuxd", "pair", "afc", "house_arrest", "installation_proxy", "remote_pairing", "rsd"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time"] }
+rustls = { version = "0.23", default-features = false, features = ["ring"] }
+rootcause = "0.12"
+# The same ones isideload uses: named to show their errors' causes and to retry a connection that didn't open.
+reqwest = { version = "0.13", default-features = false }
+reqwest-middleware = "0.5"
+http = "1"
+async-trait = "0.1"
+plist = "1.8"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+uuid = { version = "1", features = ["v4"] }
+tracing-subscriber = "0.3"
+
+[profile.release]
+strip = true
+lto = "thin"

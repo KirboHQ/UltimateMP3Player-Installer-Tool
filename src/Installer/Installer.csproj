@@ -9,7 +9,7 @@
     <LangVersion>latest</LangVersion>
     <RootNamespace>Installer</RootNamespace>
     <AssemblyName>UltimateMP3PlayerInstaller</AssemblyName>
-    <Version>1.0.2</Version>
+    <Version>1.1.0</Version>
     <Product>Ultimate MP3 Player Installer</Product>
     <AssemblyTitle>Ultimate MP3 Player Installer</AssemblyTitle>
     <Description>Installs Ultimate MP3 Player on your iPhone</Description>
@@ -30,8 +30,21 @@
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.22" />
     <!-- The version Avalonia.FreeDesktop is built against: a newer one renames its types and Avalonia crashes at start on Linux. -->
     <PackageReference Include="Tmds.DBus.Protocol" Version="0.21.3" />
+    <!-- The codes the phone's camera reads, for LocalDevVPN and the app's SideStore source. -->
+    <PackageReference Include="QRCoder" Version="1.8.1" />
     <AvaloniaResource Include="Assets\**" />
     <InternalsVisibleTo Include="Shots" />
+  </ItemGroup>
+
+  <!-- The helper that signs and installs (helper/, Rust, built first with cargo for this same system): beside the program, in
+       its output, in Shots' and in the published folder, never inside the single file, since it runs as a process of its own. -->
+  <PropertyGroup>
+    <HelperName Condition="'$(OS)' == 'Windows_NT'">ump-helper.exe</HelperName>
+    <HelperName Condition="'$(OS)' != 'Windows_NT'">ump-helper</HelperName>
+    <HelperBuilt>$(MSBuildThisFileDirectory)..\..\helper\target\release\$(HelperName)</HelperBuilt>
+  </PropertyGroup>
+  <ItemGroup Condition="Exists('$(HelperBuilt)')">
+    <None Include="$(HelperBuilt)" Link="$(HelperName)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
   </ItemGroup>
 
 </Project>

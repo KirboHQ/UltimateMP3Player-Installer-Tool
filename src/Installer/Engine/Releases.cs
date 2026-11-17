@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 namespace Installer;
 
 public sealed record IpaRelease(string Version, string Url, long Size, string? Sha256);
+public sealed record ToolRelease(string Version, string? Url, string? Sha256);
 
 public static class Releases
 {
@@ -15,8 +16,10 @@ public static class Releases
     // The page with the pictures and a big download button, not the list of files of a release: it's what a friend gets.
     public const string ShareLink = "https://github.com/" + ToolRepo;
     public const string IssuesLink = "https://github.com/" + ToolRepo + "/issues/new";
+    // (its line for this is "iCloud Account & Sign In", in Italian "Account e Accesso iCloud")
+    public static string AppleStatusLink => L.Italian ? "https://www.apple.com/it/support/systemstatus/" : "https://www.apple.com/support/systemstatus/";
 
-    public static readonly string ToolVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.2";
+    public static readonly string ToolVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.1.0";
 
     // The newest release that has its .ipa: it comes about 10 minutes after the release itself, from the Mac that builds it, so in
     // those minutes "latest" alone would find nothing.
@@ -71,14 +74,46 @@ public static class Releases
         return path;
     }
 
-    // A newer version of this program, or null. When Apple changes its rules, a new one here is the fix.
-    public static async Task<string?> NewerToolAsync(CancellationToken ct)
+    // ---- SideStore, for the phones that renew the app by themselves
+
+    // Pinned, with its hash, like everything this program hands the Apple ID to. 0.7.0-alpha: 0.6.4 and older can't sign in
+    // since Apple changed its servers (September 2026).
+    public const string SideStoreVersion = "0.7.0-alpha";
+    private const string SideStoreUrl = "https://github.com/SideStore/SideStore/releases/download/" + SideStoreVersion + "/SideStore.ipa";
+    private const string SideStoreSha256 = "e334f86e6ceeab2e0d886c07611246533f474bb18838cf13ebc09ed1f0d622b5";
+
+    // What the phone's camera opens from the codes on the screen: LocalDevVPN in the App Store (SideStore reaches the phone
+    // through it), and the app's own source added to SideStore, which installs it and keeps it renewed and updated from there.
+    public const string LocalDevVpnLink = "https://apps.apple.com/app/id6755608044";
+    public const string SideStoreSourceLink = "sidestore://source?url=https%3A%2F%2Fgithub.com%2FKirboHQ%2FUltimateMP3Player%2Freleases%2Flatest%2Fdownload%2Fsidestore-source.json";
+
+    public static async Task<string> FetchSideStoreAsync(Action<double> progress, CancellationToken ct)
+    {
+        string dir = Path.Combine(Setup.DataDir, "sidestore");
+        Directory.CreateDirectory(dir);
+        string path = Path.Combine(dir, $"SideStore-{SideStoreVersion}.ipa");
+        await Setup.DownloadAsync(SideStoreUrl, path, SideStoreSha256, progress, ct);
+        foreach (var old in Directory.GetFiles(dir))
+            if (old != path) File.Delete(old);
+        return path;
+    }
+
+    // A newer version of this program, or null, with this system's package from it when it's there (SelfUpdate puts it in
+    // place). When Apple changes its rules, a new one here is the fix.
+    public static async Task<ToolRelease?> NewerToolAsync(CancellationToken ct)
     {
         try
         {
             using var doc = JsonDocument.Parse(await GetAsync($"https://api.github.com/repos/{ToolRepo}/releases/latest", ct));
             string latest = Clean(doc.RootElement.GetProperty("tag_name").GetString());
-            return IsNewer(latest, ToolVersion) ? latest : null;
+            if (!IsNewer(latest, ToolVersion)) return null;
+            foreach (var asset in doc.RootElement.GetProperty("assets").EnumerateArray())
+            {
+                if (asset.GetProperty("name").GetString() != SelfUpdate.Asset) continue;
+                string? sha = asset.TryGetProperty("digest", out var d) && d.GetString() is { } digest && digest.StartsWith("sha256:") ? digest[7..] : null;
+                return new ToolRelease(latest, asset.GetProperty("browser_download_url").GetString(), sha);
+            }
+            return new ToolRelease(latest, null, null);
         }
         catch (OperationCanceledException) { throw; }
         catch { return null; }
@@ -101,21 +136,30 @@ public static class Releases
 }
 
 // What's remembered between runs: which phone has which version since when (iOS doesn't say it without much more talking to it),
-// and whether the computer is ready, so that the window opens at the right place without starting WSL first.
+// and what's left to tidy up after versions before 1.1.
 public sealed class Memory
 {
     public sealed class PhoneRecord
     {
         public string Version { get; set; } = "";
         public DateTime InstalledUtc { get; set; }
+
+        // Installed by the helper, under the bundle id that ends with the team: false for a phone last done with xtool, whose copy
+        // of the app still has to give its data to the new one (Helper.MoveFromOldAppAsync).
+        public bool ByHelper { get; set; }
+
+        // SideStore is on it and renews the app by itself: the date above is only when it was last done from here.
+        public bool SideStore { get; set; }
     }
 
     public Dictionary<string, PhoneRecord> Phones { get; set; } = new();
     public string? AppleId { get; set; }
-    public bool EngineReady { get; set; }
 
-    // The computer is restarting for WSL: when this program reopens by itself, it goes on instead of starting over.
-    public bool ResumeSetup { get; set; }
+    // Setup.RemoveOldEngineAsync has run (it's tried again at each start until it works).
+    public bool OldEngineRemoved { get; set; }
+
+    // WSL was left empty by it, and the person hasn't said yet whether it goes too.
+    public bool WslLeftover { get; set; }
 
     private static string File_ => Path.Combine(Setup.DataDir, "memory.json");
 

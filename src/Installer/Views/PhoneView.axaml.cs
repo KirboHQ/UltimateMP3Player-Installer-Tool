@@ -37,7 +37,7 @@ public sealed partial class PhoneView : UserControl
     {
         InitializeComponent();
         using (var picture = new Bitmap(AssetLoader.Open(new Uri(Assets + "phone.webp"))))
-            _shots = new[] { 86, 566, 1046, 1526 }.Select(x => (IImage)Screenshot(picture, x)).ToArray();
+            _shots = new[] { 74, 560, 1047, 1533 }.Select(x => (IImage)Screenshot(picture, x)).ToArray();
         _icon = new Bitmap(AssetLoader.Open(new Uri(Assets + "icon.png")));
         _installing = new InstallingIcon(_icon);
 
@@ -49,18 +49,20 @@ public sealed partial class PhoneView : UserControl
         BuildHome();
     }
 
-    // One of them, with room at the top for the island, which on a real iPhone the app leaves free: that room takes the colour of
-    // the picture's first line. Made once into a picture of its own, and from then on it's a plain image to draw.
+    // One of them, with room at the top for the island, which on a real iPhone the app leaves free (the pictures come from Android,
+    // where the app starts higher): that room takes the colour of the picture's top, plain where the status bar was. The drawn
+    // screen (292×620) is a little wider for its height than the picture's (401×870), so to keep the tab bar the picture is
+    // squeezed by about 5% in height rather than cut. Made once into a picture of its own, and from then on it's a plain image.
     private static RenderTargetBitmap Screenshot(Bitmap picture, int x)
     {
-        const int width = 396, height = 838, room = 24, top = 78, corner = 44;
+        const int width = 401, tall = 870, height = 852, room = 24, top = 64, corner = 62;
         var shot = new RenderTargetBitmap(new PixelSize(width, height));
         using var c = shot.CreateDrawingContext();
-        c.DrawImage(picture, new Rect(x + 70, top + 4, width - 140, 2), new Rect(0, 0, width, room + corner));
+        c.DrawImage(picture, new Rect(x + 8, top + 30, width - 16, 2), new Rect(0, 0, width, room + corner));
         // (rounded: the picture's own phone has round corners, and they aren't at the screen's corners any more)
         var below = new Rect(0, room, width, height - room);
         using (c.PushClip(new RoundedRect(below, new Vector(corner, corner), new Vector(corner, corner), default, default)))
-            c.DrawImage(picture, new Rect(x, top, width, height - room), below);
+            c.DrawImage(picture, new Rect(x, top + 3, width, tall - 3), below); // (+3: smoothing would pull in the frame's dark line above)
         return shot;
     }
 
@@ -246,7 +248,10 @@ public sealed partial class PhoneView : UserControl
 
     public sealed record GuideRow(string Label, string Tile = "#8E8E93", bool Target = false, bool Toggle = false, bool Plain = false, string? Header = null);
     public sealed record GuideAlert(string Title, string Text, string Yes, string No, bool Code = false);
-    public sealed record GuidePage(string Title, GuideRow[]? Rows = null, GuideAlert? Alert = null, bool Back = true);
+    // A screen of an app rather than of Settings: an icon, a title, a few words, maybe fields, one button to tap. Camera: the
+    // camera pointed at the code on the computer (Text is what the code says), with the yellow button iOS shows over it.
+    public sealed record GuideScreen(string Title, string Text, string Button, string? Tile = null, bool AppIcon = false, string[]? Fields = null, bool Camera = false);
+    public sealed record GuidePage(string Title, GuideRow[]? Rows = null, GuideAlert? Alert = null, bool Back = true, GuideScreen? Screen = null);
 
     // Shows the pages in turn, a finger tapping what's to tap, and starts over: the same thing the person has to do, on a loop.
     internal static int GuideFrame { get; set; }
@@ -384,6 +389,12 @@ public sealed partial class PhoneView : UserControl
             view.Children.Add(MakeAlert(alert));
             return view;
         }
+        if (page.Screen is { } screen)
+        {
+            view.Background = Brushes.Black;
+            view.Children.Add(MakeScreen(screen));
+            return view;
+        }
 
         var column = new StackPanel { Margin = new Thickness(14, 62, 14, 0), Spacing = 8, Background = null };
         view.Background = Brushes.Black;
@@ -449,6 +460,60 @@ public sealed partial class PhoneView : UserControl
                 Motion.Tween(knob!, 220, Motion.CubicOut, k => Motion.Place(knob!, 20 * k));
             });
         return cell;
+    }
+
+    // What's tapped: lit, and the finger comes down on it.
+    private static Control Target(Control button, double corner)
+    {
+        var cell = new Panel { HorizontalAlignment = button.HorizontalAlignment, VerticalAlignment = button.VerticalAlignment, Margin = button.Margin, Children = { button } };
+        button.Margin = default;
+        cell.Children.Add(new Border { BorderBrush = Ring, BorderThickness = new Thickness(2), CornerRadius = new CornerRadius(corner), Margin = new Thickness(-4), IsHitTestVisible = false });
+        cell.Classes.Add("target");
+        return cell;
+    }
+
+    private Control MakeScreen(GuideScreen s)
+    {
+        if (s.Camera)
+        {
+            var finder = new Panel { Background = new ImmutableSolidColorBrush(Color.Parse("#1C1C20")) };
+            var code = new QrCode { Width = 150, Height = 150, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, -60, 0, 0) };
+            code.Show(s.Text);
+            finder.Children.Add(code);
+            var pill = new Border
+            {
+                Background = new ImmutableSolidColorBrush(Color.Parse("#FFD60A")),
+                CornerRadius = new CornerRadius(14),
+                Padding = new Thickness(16, 7),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 170, 0, 0),
+                Child = new TextBlock { Text = s.Button, FontSize = 13.5, FontWeight = FontWeight.SemiBold, Foreground = Brushes.Black },
+            };
+            finder.Children.Add(Target(pill, 16));
+            return finder;
+        }
+
+        var column = new StackPanel { Margin = new Thickness(22, 76, 22, 0), Spacing = 10 };
+        if (s.AppIcon || s.Tile != null)
+            column.Children.Add(new Border
+            {
+                Width = 76, Height = 76, CornerRadius = new CornerRadius(17), ClipToBounds = true, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 0, 0, 4),
+                Background = s.Tile != null ? new ImmutableSolidColorBrush(Color.Parse(s.Tile)) : null,
+                Child = s.AppIcon ? new Image { Source = _icon } : null,
+            });
+        column.Children.Add(new TextBlock { Text = s.Title, FontFamily = Icons.Display, FontSize = 22, FontWeight = FontWeight.Bold, Foreground = Brushes.White, TextWrapping = TextWrapping.Wrap });
+        if (s.Text.Length > 0)
+            column.Children.Add(new TextBlock { Text = s.Text, FontSize = 13, LineHeight = 18, Foreground = Grey, TextWrapping = TextWrapping.Wrap });
+        foreach (var field in s.Fields ?? [])
+            column.Children.Add(new Border { Background = Group, CornerRadius = new CornerRadius(10), Height = 40, Padding = new Thickness(12, 0), Child = new TextBlock { Text = field, FontSize = 14, Foreground = Brushes.White, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis } });
+        var button = new Border
+        {
+            Background = Blue, CornerRadius = new CornerRadius(17), Height = 34, Padding = new Thickness(24, 0), HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 8, 0, 0),
+            Child = new TextBlock { Text = s.Button, FontSize = 14, FontWeight = FontWeight.SemiBold, Foreground = Brushes.White, VerticalAlignment = VerticalAlignment.Center },
+        };
+        column.Children.Add(Target(button, 21));
+        return column;
     }
 
     private static Control MakeAlert(GuideAlert a)
@@ -558,5 +623,28 @@ public static class Guides
     {
         new PhoneView.GuidePage("", Alert: new PhoneView.GuideAlert(L.T("Apple ID Sign In Requested"), L.T("Your Apple ID is being used to sign in on a new device."), L.T("Allow"), L.T("Don't Allow"))),
         new PhoneView.GuidePage("", Alert: new PhoneView.GuideAlert(L.T("Apple ID Verification Code"), L.T("Enter this code on your other device."), L.T("Done"), "", Code: true)),
+    };
+
+    // SideStore's part. Its own screens and LocalDevVPN's are in English only, as the apps are; iOS's are in the person's language.
+    public static PhoneView.GuidePage[] LocalDevVpn() => new[]
+    {
+        new PhoneView.GuidePage("", Screen: new PhoneView.GuideScreen("", Releases.LocalDevVpnLink, "App Store", Camera: true)),
+        new PhoneView.GuidePage("", Screen: new PhoneView.GuideScreen("LocalDevVPN", L.T("Developer Tools"), L.T("Get"), Tile: "#0A84FF")),
+        new PhoneView.GuidePage("", Screen: new PhoneView.GuideScreen("LocalDevVPN", "", "Connect", Tile: "#0A84FF")),
+        new PhoneView.GuidePage("", Alert: new PhoneView.GuideAlert(L.T("“LocalDevVPN” Would Like to Add VPN Configurations"), L.T("All network activity on this iPhone may be filtered or monitored when using VPN."), L.T("Allow"), L.T("Don't Allow"))),
+    };
+
+    public static PhoneView.GuidePage[] SideStoreSignIn(string appleId) => new[]
+    {
+        new PhoneView.GuidePage("Settings", new[] { new PhoneView.GuideRow("Sign in with Apple ID", Target: true, Plain: true, Header: "ACCOUNT") }, Back: false),
+        new PhoneView.GuidePage("", Screen:new PhoneView.GuideScreen("Welcome to SideStore.", "Sign in with your Apple ID to get started.", "Sign in", Fields: new[] { appleId, "••••••••" })),
+        new PhoneView.GuidePage("", Alert: new PhoneView.GuideAlert(L.T("Apple ID Sign In Requested"), L.T("Your Apple ID is being used to sign in on a new device."), L.T("Allow"), L.T("Don't Allow"))),
+        new PhoneView.GuidePage("", Screen: new PhoneView.GuideScreen("How it works", "Apps are refreshed in the background while you are on SideStore VPN!", "Got it")),
+    };
+
+    public static PhoneView.GuidePage[] SideStoreSource() => new[]
+    {
+        new PhoneView.GuidePage("", Screen: new PhoneView.GuideScreen("", Releases.SideStoreSourceLink, "SideStore", Camera: true)),
+        new PhoneView.GuidePage("", Screen: new PhoneView.GuideScreen("Ultimate MP3 Player", "KirboHQ", "FREE", AppIcon: true)),
     };
 }

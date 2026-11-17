@@ -406,3 +406,6 @@ out/
 # Claude Code's own files stay on this computer
 CLAUDE.md
 .claude/
+
+# The helper's build (its Cargo.lock stays)
+helper/target/

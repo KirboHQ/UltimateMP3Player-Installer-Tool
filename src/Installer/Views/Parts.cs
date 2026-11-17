@@ -318,6 +318,42 @@ public sealed class Confetti : Control
     }
 }
 
+// A code for the phone's camera: one pixel a module, made big without smoothing, so its edges stay sharp at any scale.
+public sealed class QrCode : Border
+{
+    private readonly Image _image = new() { Stretch = Stretch.Uniform };
+    private string? _shown;
+
+    public QrCode()
+    {
+        // (white all round: cameras want a quiet margin, which the matrix brings too)
+        Background = Brushes.White;
+        CornerRadius = new CornerRadius(12);
+        ClipToBounds = true;
+        RenderOptions.SetBitmapInterpolationMode(_image, BitmapInterpolationMode.None);
+        Child = _image;
+    }
+
+    public void Show(string text)
+    {
+        if (text == _shown) return;
+        _shown = text;
+        // (the lowest correction: fewer, bigger modules, and a screen doesn't get dirty like paper)
+        using var data = new QRCoder.QRCodeGenerator().CreateQrCode(text, QRCoder.QRCodeGenerator.ECCLevel.L);
+        var rows = data.ModuleMatrix;
+        int n = rows.Count;
+        var pixels = new int[n * n];
+        for (int y = 0; y < n; y++)
+            for (int x = 0; x < n; x++)
+                pixels[y * n + x] = rows[y][x] ? unchecked((int)0xFF000000) : -1;
+        var picture = new WriteableBitmap(new PixelSize(n, n), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Opaque);
+        using (var buffer = picture.Lock()) Marshal.Copy(pixels, 0, buffer.Address, pixels.Length);
+        var old = _image.Source as IDisposable;
+        _image.Source = picture;
+        old?.Dispose();
+    }
+}
+
 public static class Icons
 {
     public static Avalonia.Controls.Shapes.Path Make(string key, IBrush? stroke = null, double size = 18)
