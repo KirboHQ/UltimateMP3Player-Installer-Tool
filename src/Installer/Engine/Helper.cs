@@ -272,7 +272,7 @@ public static class Errors
 
     private static readonly (string[] Marks, string Title, string Body, string? Other, bool AppleSide)[] Known =
     {
-        (new[] { "-20101", "-22406", "incorrect password", "invalid credentials" }, "Wrong email or password", "Check them and try again: they're the ones you use for iCloud.", null, false),
+        (new[] { "-20101", "-22406", "-20970", "entered incorrectly", "incorrect password", "invalid credentials" }, "Wrong email or password", "Check them and try again: they're the ones you use for iCloud.", null, false),
         (new[] { "-21669", "-22951", "incorrect verification" }, "That code didn't work", "Ask for a new one and type it right away.", null, false),
         (new[] { "-80045", "-80046", "-36607", "HTTP 503", "503 Service", "cannot be completed at this time" }, "Apple is refusing the login right now", "It happens: Apple changes its rules every now and then. Try again in a little while, and look for a new version of this program.", null, true),
         (new[] { "0xe8008024", "0xe8008018", "profile is banned", "identity no longer valid" }, "Apple rejected this Apple ID on this iPhone", "It's tied to the account, not to you or the app. A different free Apple ID usually works.", AnotherId, false),

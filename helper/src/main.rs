@@ -66,6 +66,9 @@ struct Session {
     token: String,
     duration: u64,
     expiry: u64,
+    // Signed in with the anisette server's identity (Apple had turned ours away): the renewals keep using it.
+    #[serde(default)]
+    spare: bool,
 }
 
 #[tokio::main]
@@ -186,8 +189,8 @@ fn patient_client() -> Result<reqwest_middleware::ClientWithMiddleware, Report> 
     Ok(reqwest_middleware::ClientBuilder::new(client).with(RetryConnect).build())
 }
 
-async fn account(data: &Path, email: &str) -> Result<AppleAccount, Report> {
-    let mut account = AppleAccount::builder(email).anisette_provider(anisette(data)?).build().await?;
+async fn account(data: &Path, email: &str, spare: bool) -> Result<AppleAccount, Report> {
+    let mut account = AppleAccount::builder(email).anisette_provider(anisette(data, spare)?).build().await?;
     let gs = Arc::get_mut(&mut account.grandslam_client).ok_or_else(|| report!("The connection to Apple is shared"))?;
     gs.client = patient_client()?;
     Ok(account)
@@ -255,25 +258,44 @@ fn storage(data: &Path) -> Box<dyn SideloadingStorage> {
     Box::new(FsStorage::new(data.join("isideload")))
 }
 
-fn anisette(data: &Path) -> Result<RemoteV3AnisetteProvider, Report> {
-    Ok(RemoteV3AnisetteProvider::new(ANISETTE, storage(data), "0".to_string())?
-        // What iloader sends too, until the anisette servers report it themselves.
-        .set_client_info_override(Some(AnisetteClientInfo {
-            client_info: "<Mac15,7> <macOS;27.0;26A5378j> <com.apple.AuthKit/1 (com.apple.akd/1.0)>".to_string(),
-            user_agent: "akd/1.0 CFNetwork/811.5.4".to_string(),
-        })))
+// Spare: the identity the anisette server hands out, which its maintainer changes when Apple does.
+fn anisette(data: &Path, spare: bool) -> Result<RemoteV3AnisetteProvider, Report> {
+    let provider = RemoteV3AnisetteProvider::new(ANISETTE, storage(data), "0".to_string())?;
+    if spare {
+        return Ok(provider);
+    }
+    // A current Mac, as iloader sent it, because the anisette servers' 10.12.6 makes Apple ask for the code again and again.
+    // Written "Mac OS X" like Apple's own frameworks: since 2026-11-19 gsa.apple.com answers 503 to any "<macOS;".
+    Ok(provider.set_client_info_override(Some(AnisetteClientInfo {
+        client_info: "<Mac15,7> <Mac OS X;27.0;26A5378j> <com.apple.AuthKit/1 (com.apple.akd/1.0)>".to_string(),
+        user_agent: "akd/1.0 CFNetwork/811.5.4".to_string(),
+    })))
+}
+
+// Apple's door turning the identity away at the first request (no password has gone out yet), as on 2026-11-19.
+fn turned_away(error: &str) -> bool {
+    error.contains("initial login request") && error.contains("server error (503")
 }
 
 async fn login(data: &Path, email: &str) -> Result<(), Report> {
     emit(json!({ "event": "ask", "what": "password" }));
     let password = read_line()?;
     let email = email.to_lowercase();
-    let mut account = retrying(async || {
-        let mut account = account(data, &email).await?;
-        account.login(&password, ask_code).await?;
-        Ok(account)
-    })
-    .await?;
+    let sign_in = async |spare| {
+        retrying(async || {
+            let mut account = account(data, &email, spare).await?;
+            account.login(&password, ask_code).await?;
+            Ok(account)
+        })
+        .await
+    };
+    let (mut account, spare) = match sign_in(false).await {
+        Err(e) if turned_away(&e.to_string()) => {
+            eprintln!("Apple turned this identity away, trying the anisette server's: {e}");
+            (sign_in(true).await?, true)
+        }
+        done => (done?, false),
+    };
     drop(password);
 
     // The same token DeveloperSession asks for, kept so the renewals don't need the password again.
@@ -285,7 +307,7 @@ async fn login(data: &Path, email: &str) -> Result<(), Report> {
         .and_then(|v| v.as_string())
         .ok_or_else(|| report!("Apple gave no account id"))?
         .to_string();
-    let session = Session { email: email.clone(), adsid, token: token.token, duration: token.duration, expiry: token.expiry };
+    let session = Session { email: email.clone(), adsid, token: token.token, duration: token.duration, expiry: token.expiry, spare };
     std::fs::write(data.join(SESSION), serde_json::to_vec(&session)?)?;
     emit(json!({ "event": "done", "email": email }));
     Ok(())
@@ -318,7 +340,7 @@ async fn developer_session(data: &Path) -> Result<(String, DeveloperSession), Re
     let Ok(bytes) = std::fs::read(data.join(SESSION)) else { bail!("Not signed in") };
     let s: Session = serde_json::from_slice(&bytes)?;
     // Built without logging in: the saved token and the same anisette identity are what Apple checks.
-    let account = account(data, &s.email).await?;
+    let account = account(data, &s.email, s.spare).await?;
     let token = AppToken { token: s.token, duration: s.duration, expiry: s.expiry };
     let session = DeveloperSession::new(token, s.adsid, account.grandslam_client.clone(), account.anisette_generator.clone());
     Ok((s.email, session))
@@ -608,7 +630,17 @@ fn below(version: &str, major: u32, minor: u32) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::{below, patient_client};
+    use super::{below, patient_client, turned_away};
+
+    #[test]
+    fn only_a_503_at_the_first_request_tries_the_spare_identity() {
+        // Both as the helper printed them on 2026-11-20.
+        let door = "Failed to log in to Apple ID\n ● Failed to send initial login request\n ● Received error response from grandslam\n ● HTTP status server error (503 Service Temporarily Unavailable) for url (https://gsa.apple.com/grandslam/GsService2)";
+        let answer = "Failed to log in to Apple ID\n ● GrandSlam error during initial login request\n ● Auth error -20970: Your account information was entered incorrectly.";
+        assert!(turned_away(door));
+        assert!(!turned_away(answer));
+        assert!(!turned_away("Failed to get app token: HTTP status server error (503 Service Unavailable)"));
+    }
 
     #[tokio::test]
     async fn a_connection_that_never_opens_is_tried_again_then_fails() {

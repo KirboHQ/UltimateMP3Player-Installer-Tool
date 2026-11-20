@@ -49,6 +49,7 @@ Check(Releases.SideStoreSourceLink == "sidestore://source?url=" + Uri.EscapeData
 // ---- What went wrong
 
 Check(Errors.For("Error: -80045 cannot").Title == L.T("Apple is refusing the login right now"), "Apple refusing");
+Check(Errors.For("Auth error -20970: Your account information was entered incorrectly.").Title == L.T("Wrong email or password"), "an address Apple doesn't know is a wrong email");
 Check(Errors.For("Error: 0xe8008024").Other == L.T("Use another Apple ID"), "an account Apple rejects leads to another account");
 Check(Errors.For("Your session has expired. Please log in.").Other == L.T("Sign in again"), "an expired session leads to signing in");
 Check(Errors.For("No such host is known. (github.com:443)").Title == L.T("No internet connection"), "no internet");
