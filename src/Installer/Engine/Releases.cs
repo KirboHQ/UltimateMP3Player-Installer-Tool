@@ -19,7 +19,7 @@ public static class Releases
     // (its line for this is "iCloud Account & Sign In", in Italian "Account e Accesso iCloud")
     public static string AppleStatusLink => L.Italian ? "https://www.apple.com/it/support/systemstatus/" : "https://www.apple.com/support/systemstatus/";
 
-    public static readonly string ToolVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.1.2";
+    public static readonly string ToolVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.1.3";
 
     // The newest release that has its .ipa: it comes about 10 minutes after the release itself, from the Mac that builds it, so in
     // those minutes "latest" alone would find nothing.
@@ -76,8 +76,8 @@ public static class Releases
 
     // ---- SideStore, for the phones that renew the app by themselves
 
-    // Pinned, with its hash, like everything this program hands the Apple ID to. 0.7.0-alpha: 0.6.4 and older can't sign in
-    // since Apple changed its servers (September 2026).
+    // The version proven here, with its hash: what goes on the phone when GitHub can't say which is newest, and the oldest one
+    // ever taken. 0.7.0-alpha: 0.6.4 and older can't sign in since Apple changed its servers (September 2026).
     public const string SideStoreVersion = "0.7.0-alpha";
     private const string SideStoreUrl = "https://github.com/SideStore/SideStore/releases/download/" + SideStoreVersion + "/SideStore.ipa";
     private const string SideStoreSha256 = "e334f86e6ceeab2e0d886c07611246533f474bb18838cf13ebc09ed1f0d622b5";
@@ -87,12 +87,21 @@ public static class Releases
     public const string LocalDevVpnLink = "https://apps.apple.com/app/id6755608044";
     public const string SideStoreSourceLink = "sidestore://source?url=https%3A%2F%2Fgithub.com%2FKirboHQ%2FUltimateMP3Player%2Freleases%2Flatest%2Fdownload%2Fsidestore-source.json";
 
+    // SideStore's newest release, so its own fixes for Apple's changes reach the phones without a new version of this program,
+    // and a repair never takes back a SideStore that updated itself.
     public static async Task<string> FetchSideStoreAsync(Action<double> progress, CancellationToken ct)
     {
+        var store = (Version: SideStoreVersion, Url: SideStoreUrl, Sha256: SideStoreSha256);
+        try
+        {
+            store = SideStoreFrom(await GetAsync("https://api.github.com/repos/SideStore/SideStore/releases/latest", ct)) ?? store;
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
+        catch { }
         string dir = Path.Combine(Setup.DataDir, "sidestore");
         Directory.CreateDirectory(dir);
-        string path = Path.Combine(dir, $"SideStore-{SideStoreVersion}.ipa");
-        await Setup.DownloadAsync(SideStoreUrl, path, SideStoreSha256, progress, ct);
+        string path = Path.Combine(dir, $"SideStore-{string.Concat(store.Version.Split(Path.GetInvalidFileNameChars()))}.ipa");
+        await Setup.DownloadAsync(store.Url, path, store.Sha256, progress, ct);
         foreach (var old in Directory.GetFiles(dir))
             if (old != path) File.Delete(old);
         return path;
@@ -118,6 +127,23 @@ public static class Releases
         catch (OperationCanceledException) { throw; }
         catch { return null; }
     }
+
+    // GitHub's latest release of SideStore, if it can go on a phone: never a prerelease (its nightly), only with the sha256 GitHub
+    // gives for the file, and never older than the version proven here (a release marked latest by hand could be).
+    public static (string Version, string Url, string Sha256)? SideStoreFrom(string json)
+    {
+        using var doc = JsonDocument.Parse(json);
+        var release = doc.RootElement;
+        string version = Clean(release.GetProperty("tag_name").GetString());
+        if (release.GetProperty("prerelease").GetBoolean() || Numbers(version) is not { } v || v < Numbers(SideStoreVersion)) return null;
+        foreach (var asset in release.GetProperty("assets").EnumerateArray())
+            if (asset.GetProperty("name").GetString() == "SideStore.ipa" && asset.TryGetProperty("digest", out var d) && d.GetString() is { } digest && digest.StartsWith("sha256:"))
+                return (version, asset.GetProperty("browser_download_url").GetString()!, digest[7..]);
+        return null;
+    }
+
+    // "0.7.0-alpha" → 0.7.0: SideStore's tags carry words after the numbers.
+    private static Version? Numbers(string version) => Version.TryParse(version.Split('-', '+')[0], out var v) ? v : null;
 
     public static bool IsNewer(string a, string b) => Version.TryParse(a, out var x) && Version.TryParse(b, out var y) && x > y;
 

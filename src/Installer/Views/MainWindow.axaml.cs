@@ -40,6 +40,12 @@ public partial class MainWindow : Window
     // How this phone gets renewed, for this run: by SideStore on it, or from here by cable; null until asked (ChooseAsync).
     // "Try again" keeps it.
     private bool? _sideStore;
+    // Home's main button: the app alone, by cable, on any phone that has it. A phone with SideStore keeps it: it's the same app
+    // signed with the same certificate (the helper put it inside SideStore), so SideStore carries on renewing it.
+    // (only for a phone that has the app: a new one goes the whole way, its choice included)
+    private bool _appOnly;
+    // The phone the home page shows: the one plugged in, or with none seen the last one done.
+    private Memory.PhoneRecord? _homeRecord;
     private bool _removeArmed, _chainRunning, _toolReady;
 
     public MainWindow()
@@ -88,9 +94,10 @@ public partial class MainWindow : Window
         ChooseSideStore.Click += (_, _) => _chosen?.TrySetResult(true);
         SideStoreNext.Click += (_, _) => NextHandOver();
         ShareButton.Click += async (_, _) => await ShareAsync();
-        HomeButton.Click += (_, _) => StartFresh(null);
-        // (to SideStore, or back to the cable from it)
-        HomeSideStore.Click += (_, _) => StartFresh(!(_phone != null && _memory.Phones.TryGetValue(_phone.Udid, out var r) && r.SideStore));
+        HomeButton.Click += (_, _) => StartFresh(null, appOnly: true);
+        HomeRepair.Click += (_, _) => StartFresh(null);
+        // (to SideStore, or away from it)
+        HomeSideStore.Click += (_, _) => StartFresh(_homeRecord?.SideStore != true);
         SignOutButton.Click += async (_, _) => await SignOutAsync();
         RemoveButton.Click += async (_, _) => await RemoveAsync();
         WslRemove.Click += async (_, _) => await RemoveWslAsync();
@@ -101,6 +108,9 @@ public partial class MainWindow : Window
             WslCard.IsVisible = false;
         };
         ProblemRetry.Click += (_, _) => _retry?.Invoke();
+        foreach (var back in new[] { BlockerBack, ConnectBack, ChoiceBack, AccountBack, SideStoreBack }) back.Click += (_, _) => GoBack();
+        ProblemBack.Click += (_, _) => LeaveToStart();
+        DoneButton.Click += (_, _) => LeaveToStart();
         ProblemOther.Click += (_, _) => _otherAccount?.Invoke();
         ProblemDetails.Click += (_, _) => ShowSheet(L.T("Details"), _problemDetails, copy: true);
         ProblemReport.Click += (_, _) => Setup.Open(Releases.IssuesLink);
@@ -180,6 +190,21 @@ public partial class MainWindow : Window
         }
         // (whatever went wrong, it's tried again at the next start)
         catch { }
+    }
+
+    // "Back" on a page that waits for the person: the wait ends cancelled, and the chain stops as it does when they say stop
+    // (StartChain), on Home or, with no phone done yet, the welcome page. Waits already over are left as they are.
+    private void GoBack()
+    {
+        foreach (var wait in new[] { _blockerDone, _phoneArrived, _loginAsked, _handedOver }) wait?.TrySetCanceled();
+        _chosen?.TrySetCanceled();
+    }
+
+    // From a page the chain has already left: the end, or a problem.
+    private void LeaveToStart()
+    {
+        if (_memory.Phones.Count > 0) ShowHome();
+        else GoWelcome();
     }
 
     private void GoWelcome()
@@ -264,10 +289,11 @@ public partial class MainWindow : Window
 
     // ---- The way through: each step skips itself when it isn't needed, so "try again" and coming back are the same path.
 
-    private void StartFresh(bool? sideStore)
+    private void StartFresh(bool? sideStore, bool appOnly = false)
     {
         if (_chainRunning) return;
         _sideStore = sideStore;
+        _appOnly = appOnly;
         StartChain();
     }
 
@@ -372,6 +398,13 @@ public partial class MainWindow : Window
     {
         _blockerDone = new TaskCompletionSource();
         var done = _blockerDone;
+        // A look every 1.5 s, and at once when the person goes back.
+        async Task Wait()
+        {
+            await Task.WhenAny(Task.Delay(1500, Ct), done.Task);
+            Ct.ThrowIfCancellationRequested();
+            if (done.Task.IsCanceled) throw new OperationCanceledException();
+        }
         void Card(string title, string text, string? button, Action? action)
         {
             BlockerTitle.Text = L.T(title);
@@ -395,11 +428,11 @@ public partial class MainWindow : Window
         {
             case Blocker.AppleDevices:
                 Card("Install Apple Devices", "It's Apple's free app that lets Windows talk to the iPhone. Press Get in the Store: I'll notice by myself and carry on.", "Open the Store", Setup.OpenAppleDevicesInStore);
-                while (!Setup.AppleDevicesInstalled()) await Task.Delay(1500, Ct);
+                while (!Setup.AppleDevicesInstalled()) await Wait();
                 return;
             case Blocker.Usbmuxd:
                 Card("usbmuxd is missing", "It's the small service that talks to the iPhone. Install it with your system's packages, for example:\nsudo apt install usbmuxd\nI'll notice by myself and carry on.", null, null);
-                while (!await Usbmux.RunningAsync(Ct)) await Task.Delay(1500, Ct);
+                while (!await Usbmux.RunningAsync(Ct)) await Wait();
                 return;
             default:
                 return;
@@ -411,7 +444,7 @@ public partial class MainWindow : Window
         if (_phone != null) return;
         ConnectTitle.Text = L.T("Plug in your iPhone");
         ConnectText.Text = L.T("Use the cable and unlock it. I'll recognize it by myself.");
-        ConnectHelp.IsVisible = true;
+        ConnectHelp.IsVisible = ConnectBack.IsVisible = true;
         Go(ConnectPage, 2, Cyan);
         Phone.Show(Scene.Lock);
         Phone.LockHintShown(true);
@@ -424,7 +457,7 @@ public partial class MainWindow : Window
         Phone.Say(L.T("Connected"));
         ConnectTitle.Text = L.F("There it is: {0}", _phoneName ?? "iPhone");
         ConnectText.Text = _phoneOs != null ? L.F("iOS {0}", _phoneOs) : "";
-        ConnectHelp.IsVisible = false;
+        ConnectHelp.IsVisible = ConnectBack.IsVisible = false;
         await Task.Delay(1300, Ct);
     }
 
@@ -454,7 +487,7 @@ public partial class MainWindow : Window
         Phone.SetCable(CableState.In);
         AccountError.IsVisible = AccountStatus.IsVisible = false;
         LoginSpinner.IsVisible = false;
-        LoginButton.IsEnabled = true;
+        LoginButton.IsEnabled = AccountBack.IsEnabled = true;
         EmailBox.Text ??= _memory.AppleId;
         (string.IsNullOrEmpty(EmailBox.Text) ? EmailBox : PasswordBox).Focus();
 
@@ -469,7 +502,7 @@ public partial class MainWindow : Window
                 continue;
             }
 
-            LoginButton.IsEnabled = false;
+            LoginButton.IsEnabled = AccountBack.IsEnabled = false;
             LoginSpinner.IsVisible = true;
             AccountError.IsVisible = AccountStatus.IsVisible = false;
             try
@@ -495,7 +528,7 @@ public partial class MainWindow : Window
             Phone.Show(Scene.Lock);
             PasswordBox.Text = "";
             PasswordBox.Focus();
-            LoginButton.IsEnabled = true;
+            LoginButton.IsEnabled = AccountBack.IsEnabled = true;
             LoginSpinner.IsVisible = false;
         }
     }
@@ -559,8 +592,8 @@ public partial class MainWindow : Window
         }
 
         // With SideStore the bar is the app's up to 60%, then SideStore's.
-        bool sideStore = _sideStore == true;
         _memory.Phones.TryGetValue(phone.Udid, out var before);
+        bool appOnly = _appOnly && before != null, sideStore = _sideStore == true && !appOnly;
         double appPart = sideStore ? 0.6 : 1, shown = 0;
         void Show(string? text, double overall, bool app)
         {
@@ -593,6 +626,13 @@ public partial class MainWindow : Window
             if (before?.ByHelper != true)
                 await Helper.MoveFromOldAppAsync(phone.Udid, p => InstallStage.Text = L.F("Moving your music to the new version: {0}%", (int)(p * 100)), Ask, Ct);
             Phone.Installed();
+            // Kept before SideStore's part, which can fail on its own: the app is renewed either way. Not the first time on a phone:
+            // trying again then has to go through the first time's steps (Developer Mode, trusting the Apple ID) once more.
+            if (before != null)
+            {
+                _memory.Phones[phone.Udid] = new Memory.PhoneRecord { Version = _release?.Version ?? "", InstalledUtc = DateTime.UtcNow, ByHelper = true, SideStore = before.SideStore };
+                _memory.Save();
+            }
 
             if (sideStore)
             {
@@ -613,8 +653,8 @@ public partial class MainWindow : Window
         InstallPercent.Text = "100%";
         // SideStore only once the person has done their part on the phone: until then, this phone is still renewed by cable. That
         // part starts over when SideStore had been deleted (its sign-in and its list of apps went with it), and a run by cable
-        // takes the phone back to the cable.
-        var record = new Memory.PhoneRecord { Version = _release?.Version ?? "", InstalledUtc = DateTime.UtcNow, ByHelper = true, SideStore = sideStore && existed && before?.SideStore == true };
+        // takes the phone back to the cable, unless it was the app alone from Home.
+        var record = new Memory.PhoneRecord { Version = _release?.Version ?? "", InstalledUtc = DateTime.UtcNow, ByHelper = true, SideStore = (sideStore && existed || appOnly) && before?.SideStore == true };
         _memory.Phones[phone.Udid] = record;
         _memory.Save();
         await Task.Delay(900, Ct);
@@ -627,7 +667,7 @@ public partial class MainWindow : Window
             record.SideStore = true;
             _memory.Save();
         }
-        ShowDone(first, same, sideStore, handedOver);
+        ShowDone(first, same, sideStore, handedOver, alongSideStore: !sideStore && record.SideStore);
     }
 
     private async Task ActivateAsync()
@@ -685,18 +725,22 @@ public partial class MainWindow : Window
         else _handedOver?.TrySetResult();
     }
 
-    // handedOver: SideStore was just set up, rather than renewed or repaired.
-    private void ShowDone(bool first, bool same, bool sideStore = false, bool handedOver = false)
+    // handedOver: SideStore was just set up, rather than renewed or repaired. alongSideStore: the app alone by cable on a phone
+    // that SideStore renews too.
+    private void ShowDone(bool first, bool same, bool sideStore = false, bool handedOver = false, bool alongSideStore = false)
     {
         DoneTitle.Text = L.T(first ? "You did it!" : handedOver ? "It renews by itself now!" : same ? "Good for another 7 days!" : "It's updated!");
         DoneText.Text = L.T(first ? "Open Ultimate MP3 Player on your iPhone and download your first song." : "Everything's as you left it, and your music is all there.");
         DoneUntil.Text = sideStore ? L.T("From now on SideStore renews it") : L.F("Works until {0}", DateTime.Now.AddDays(Memory.SignedDays).ToString("dddd d MMMM", L.Culture));
-        DoneHint.Text = L.T(sideStore ? "Open SideStore every few days, with LocalDevVPN connected. If it ever stops, come back here and press Repair SideStore." : "Before then, come back here: one click and it's good for 7 more days.");
+        DoneHint.Text = L.T(sideStore ? "Open SideStore every few days, with LocalDevVPN connected. If it ever stops, come back here and press Repair SideStore."
+            : alongSideStore ? "SideStore keeps renewing it by itself. If it ever can't, come back here before then."
+            : "Before then, come back here: one click and it's good for 7 more days.");
         ShareText.Text = L.T("Copy the link for a friend");
         Go(DonePage, 0, Green);
         Phone.OpenApp();
         Party.Burst();
         Phone.Say(L.T("Ready"));
+        DoneButton.Focus();
     }
 
     private async Task ShareAsync()
@@ -749,17 +793,18 @@ public partial class MainWindow : Window
         SignOutButton.IsVisible = _appleId != null;
 
         Phone.SetCable(_phone != null ? CableState.In : CableState.Near);
-        HomeButton.IsEnabled = _phone != null;
         // (a phone plugged in while Apple's service was off can go unseen until it's plugged in again)
         HomeHint.IsVisible = _phone == null;
-        // With SideStore, coming back here means it stopped: the button renews it and the app, and makes its pairing anew.
-        HomeButton.Content = _phone == null ? L.T("Plug in your iPhone to continue")
-            : record == null ? L.T("Install on this iPhone")
-            : record.SideStore ? L.T("Repair SideStore")
+        // The app by cable, on every phone that has it, SideStore or not (with SideStore the version known here may be behind the
+        // phone's: "update" then just renews it). SideStore's own repair, which also makes its pairing anew, is the link below.
+        // All of them also with no phone seen: the way through gets the computer ready (Apple Devices included) and asks for it.
+        _homeRecord = record;
+        HomeButton.Content = record == null ? L.T("Install on this iPhone")
             : _release != null && Releases.IsNewer(_release.Version, record.Version) ? L.F("Update to {0}", _release.Version)
             : L.T("Renew for 7 days");
-        HomeSideStore.IsVisible = _phone != null && record != null;
-        HomeSideStore.Content = L.T(record?.SideStore == true ? "Go back to renewing it by cable" : "Let the iPhone renew it by itself, with SideStore");
+        HomeRepair.IsVisible = record?.SideStore == true;
+        HomeSideStore.IsVisible = record != null;
+        HomeSideStore.Content = L.T(record?.SideStore == true ? "Stop renewing it with SideStore" : "Let the iPhone renew it by itself, with SideStore");
     }
 
     private async Task SignOutAsync()

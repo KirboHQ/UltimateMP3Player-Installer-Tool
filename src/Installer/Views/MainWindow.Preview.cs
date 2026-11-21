@@ -45,7 +45,7 @@ public partial class MainWindow
                 _appRow.Waiting();
                 break;
             case "connect":
-                ConnectHelp.IsVisible = true;
+                ConnectHelp.IsVisible = ConnectBack.IsVisible = true;
                 Go(ConnectPage, 2, Cyan);
                 Phone.Show(Scene.Lock);
                 Phone.SetCable(CableState.Near);
@@ -53,7 +53,7 @@ public partial class MainWindow
             case "connected":
                 ConnectTitle.Text = L.F("There it is: {0}", _phoneName);
                 ConnectText.Text = L.F("iOS {0}", _phoneOs);
-                ConnectHelp.IsVisible = false;
+                ConnectHelp.IsVisible = ConnectBack.IsVisible = false;
                 Go(ConnectPage, 2, Cyan);
                 Phone.Show(Scene.Lock);
                 Phone.LockHintShown(false);
@@ -184,6 +184,11 @@ public partial class MainWindow
                 ShowDone(false, false, sideStore: true, handedOver: true);
                 Phone.SetCable(CableState.In);
                 Party.At(0.75);
+                break;
+            case "renewed-sidestore":
+                ShowDone(false, true, alongSideStore: true);
+                Phone.SetCable(CableState.In);
+                Party.At(1.7);
                 break;
             case "home":
                 _memory.Phones["test"] = new Memory.PhoneRecord { Version = "5.1.0", InstalledUtc = DateTime.UtcNow.AddDays(-5) };

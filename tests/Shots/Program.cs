@@ -68,6 +68,17 @@ Check(Errors.For("Not signed in").Other == L.T("Sign in again"), "no sign-in kep
 Check(Releases.IsNewer("5.1.1", "5.1.0") && !Releases.IsNewer("5.1.0", "5.1.1") && !Releases.IsNewer("5.1.0", "5.1.0"), "newer versions");
 Check(Releases.IsNewer("5.10.0", "5.9.9"), "versions are numbers, not text");
 
+// ---- Which SideStore goes on the phone
+
+const string sideStoreIpa = """{"name":"SideStore.ipa","browser_download_url":"https://github.com/SideStore/SideStore/releases/download/0.7.1/SideStore.ipa","digest":"sha256:abc"}""";
+string SideStoreRelease(string tag, bool prerelease, string asset) => $$"""{"tag_name":"{{tag}}","prerelease":{{(prerelease ? "true" : "false")}},"assets":[{"name":"build-logs.zip"},{{asset}}]}""";
+Check(Releases.SideStoreFrom(SideStoreRelease("0.7.1", false, sideStoreIpa)) == ("0.7.1", "https://github.com/SideStore/SideStore/releases/download/0.7.1/SideStore.ipa", "abc"), "SideStore's newest release, with GitHub's hash");
+Check(Releases.SideStoreFrom(SideStoreRelease("0.7.0-alpha", false, sideStoreIpa))?.Version == Releases.SideStoreVersion, "the version proven here is new enough");
+Check(Releases.SideStoreFrom(SideStoreRelease("0.6.4", false, sideStoreIpa)) == null, "never older than the version proven here");
+Check(Releases.SideStoreFrom(SideStoreRelease("0.7.1", true, sideStoreIpa)) == null, "never a prerelease");
+Check(Releases.SideStoreFrom(SideStoreRelease("0.7.1", false, """{"name":"SideStore.ipa","browser_download_url":"https://github.com/x/SideStore.ipa"}""")) == null, "never without GitHub's hash");
+Check(Releases.SideStoreFrom(SideStoreRelease("nightly", false, sideStoreIpa)) == null, "never a tag that isn't a version");
+
 // ---- This program updating itself: never a build from the sources
 
 Check(!SelfUpdate.CanUpdate, "a build from the sources doesn't replace itself");
@@ -107,7 +118,7 @@ if (perf) builder.UsePlatformDetect().SetupWithoutStarting();
 else builder.UseSkia().UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false }).SetupWithoutStarting();
 
 MainWindow.Previewing = true;
-var names = new[] { "welcome", "why", "computer", "blocker", "connect", "connected", "choice", "account", "account-error", "code", "code2", "install", "install-trust", "install-confirm", "moving", "install-sidestore", "activate", "activate2", "activate3", "activate4", "trust", "trust3", "sidestore", "sidestore2", "sidestore3", "done", "renewed", "done-sidestore", "home", "home-away", "home-wsl", "home-sidestore", "problem" };
+var names = new[] { "welcome", "why", "computer", "blocker", "connect", "connected", "choice", "account", "account-error", "code", "code2", "install", "install-trust", "install-confirm", "moving", "install-sidestore", "activate", "activate2", "activate3", "activate4", "trust", "trust3", "sidestore", "sidestore2", "sidestore3", "done", "renewed", "done-sidestore", "renewed-sidestore", "home", "home-away", "home-wsl", "home-sidestore", "problem" };
 
 if (perf)
 {
