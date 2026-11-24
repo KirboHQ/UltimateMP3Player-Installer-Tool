@@ -190,7 +190,7 @@ public static class L
         ["Nothing else is needed on this computer anymore."] = "Su questo computer non serve più nient'altro.",
         ["Open Windows' apps"] = "Apri le app di Windows",
         ["A new version of this program is out: {0}"] = "È uscita una nuova versione di questo programma: {0}",
-        ["Version {0} is ready: it goes in when you close this window. Click here to restart now."] = "La versione {0} è pronta: si installa quando chiudi questa finestra. Fai clic qui per riavviare ora.",
+        ["Version {0} is ready: click here to restart now."] = "La versione {0} è pronta: fai clic qui per riavviare ora.",
         ["The older version used it, and nothing else is in it now. If no other program needs it or the Virtual Machine Platform (some Android emulators do), I can turn both off: Windows asks your permission, and they go at the next restart."] = "Lo usava la versione precedente e ora dentro non c'è nient'altro. Se a nessun altro programma serve, né serve la Piattaforma macchina virtuale (ad alcuni emulatori Android sì), posso disattivarli tutti e due: Windows ti chiede il permesso e spariscono al prossimo riavvio.",
         ["Turn them off"] = "Disattivali",
         ["Keep them"] = "Tienili",

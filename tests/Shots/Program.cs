@@ -188,7 +188,7 @@ if (perf) builder.UsePlatformDetect().SetupWithoutStarting();
 else builder.UseSkia().UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false }).SetupWithoutStarting();
 
 MainWindow.Previewing = true;
-var names = new[] { "welcome", "why", "needs", "computer", "blocker", "blocker-linux", "connect", "connected", "account", "account-error", "code", "code2", "install", "install-trust", "install-confirm", "moving", "install-sidestore", "activate", "activate2", "activate3", "activate4", "trust", "trust3", "self", "self2", "self3", "self4", "bring", "bring-look", "bringing", "brought", "home-bring", "home-bring-notice", "sidestore-stuck", "sidestore", "sidestore2", "sidestore3", "done", "done-itself", "renewed", "done-sidestore", "renewed-sidestore", "home", "home-away", "home-wsl", "home-itself", "home-left", "home-left-notice", "home-vpn", "home-vpn-notice", "home-self", "home-self-notice", "needs-itself", "home-sidestore", "problem" };
+var names = new[] { "welcome", "why", "needs", "computer", "blocker", "blocker-linux", "connect", "connected", "account", "account-error", "code", "code2", "install", "install-trust", "install-confirm", "moving", "install-sidestore", "activate", "activate2", "activate3", "activate4", "trust", "trust3", "self", "self2", "self3", "self4", "bring", "bring-look", "bringing", "brought", "home-bring", "home-bring-notice", "sidestore-stuck", "sidestore", "sidestore2", "sidestore3", "done", "done-itself", "renewed", "done-sidestore", "renewed-sidestore", "home", "home-away", "home-wsl", "home-itself", "home-left", "home-left-notice", "home-vpn", "home-vpn-notice", "home-self", "home-self-notice", "needs-itself", "home-tool", "home-tool-notice", "home-sidestore", "problem" };
 
 if (perf)
 {
@@ -269,6 +269,20 @@ Check(firstOne.IsCompleted && second is { IsCompleted: false } && notices.IsVisi
 Press("NoticeNo");
 Dispatcher.UIThread.RunJobs();
 Check(second is { IsCompletedSuccessfully: true, Result: false }, "and has its own answer");
+// The link to a new version fits in its line, and the notice's own buttons do what they say.
+Open("home-tool");
+var link = window.FindControl<Button>("ToolUpdate")!;
+Check(link.IsVisible && link.Bounds.Width < link.MaxWidth, "the link to the new version isn't cut");
+bool closed = false;
+window.Closed += (_, _) => closed = true;
+Open("home-tool-notice");
+Press("NoticeNo");
+Dispatcher.UIThread.RunJobs();
+Check(!closed && !notices.IsVisible, "\"When I close it\" waits");
+Open("home-tool-notice");
+Press("NoticeYes");
+Dispatcher.UIThread.RunJobs();
+Check(closed, "\"Restart now\" restarts");
 
 Console.WriteLine(wrong == 0 ? "shots: ok" : $"shots: {wrong} wrong");
 return wrong == 0 ? 0 : 1;

@@ -20,6 +20,8 @@ public partial class MainWindow
         _learned = "test";
         _way = Way.App;
         _library = null;
+        _newerTool = null;
+        ToolUpdate.IsVisible = false;
         InstallSub.Text = L.T("Keep the cable plugged in. This takes about a minute.");
         InstallStop.IsVisible = false;
         Sheet.IsVisible = false;
@@ -302,6 +304,14 @@ public partial class MainWindow
                 ShowHome();
                 Phone.ShowShot(3);
                 if (name == "home-self-notice") ShowNotice(PendingNotices().First().Notice);
+                break;
+            case "home-tool":
+            case "home-tool-notice":
+                _memory.Phones["test"] = new Memory.PhoneRecord { Version = "5.1.1", InstalledUtc = DateTime.UtcNow.AddDays(-2) };
+                ShowTool("10.20.30", true);
+                ShowHome();
+                Phone.ShowShot(3);
+                if (name == "home-tool-notice") OpenNotice(PendingNotices().First(p => p.Id == "tool"));
                 break;
             case "home-sidestore":
                 _memory.Phones["test"] = new Memory.PhoneRecord { Version = "5.1.1", InstalledUtc = DateTime.UtcNow.AddDays(-12), ExpiresUtc = DateTime.UtcNow.AddDays(5.5), SideStore = true };

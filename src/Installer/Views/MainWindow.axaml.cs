@@ -241,13 +241,7 @@ public partial class MainWindow : Window
             if (await tool is { } newer)
             {
                 // Downloaded in the background and put in place by itself where it can; elsewhere a link to the release.
-                _toolReady = await SelfUpdate.PrepareAsync(newer, Ct);
-                _newerTool = newer.Version;
-                ToolUpdate.Content = _toolReady
-                    ? L.F("Version {0} is ready: it goes in when you close this window. Click here to restart now.", newer.Version)
-                    : L.F("A new version of this program is out: {0}", newer.Version);
-                // (not in the middle of an install, where restarting would cut it short)
-                ToolUpdate.IsVisible = !_chainRunning;
+                ShowTool(newer.Version, await SelfUpdate.PrepareAsync(newer, Ct));
                 if (_page == HomePage) RefreshHome();
             }
         }
@@ -258,6 +252,16 @@ public partial class MainWindow : Window
     {
         _library = await Task.Run(ComputerLibrary.Find);
         if (_page == HomePage) RefreshHome();
+    }
+
+    // (one line: the notice says the rest)
+    private void ShowTool(string version, bool ready)
+    {
+        _toolReady = ready;
+        _newerTool = version;
+        ToolUpdate.Content = ready ? L.F("Version {0} is ready: click here to restart now.", version) : L.F("A new version of this program is out: {0}", version);
+        // (not in the middle of an install, where restarting would cut it short)
+        ToolUpdate.IsVisible = !_chainRunning;
     }
 
     private void UpdateTool()
