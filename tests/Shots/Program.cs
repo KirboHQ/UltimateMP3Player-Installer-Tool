@@ -241,6 +241,34 @@ Check(Open("install-trust"), "what to do on the phone comes up");
 Escape();
 Check(notices.IsVisible, "Esc doesn't close what's waiting for the phone");
 Check(Open("install-confirm") && window.FindControl<Button>("NoticeNo")!.IsFocused, "with something taken away, No is the one ready");
+// What a notice answers: its buttons, Esc, and another one in its place.
+var question = new Notice(NoticeKind.Ask, "A question", "", "Yes", "No", Later: true);
+(bool Done, bool? Answer) Said(Action act)
+{
+    var asked = window.AskAsync(question);
+    Dispatcher.UIThread.RunJobs();
+    act();
+    Dispatcher.UIThread.RunJobs();
+    return (asked.IsCompletedSuccessfully, asked.IsCompletedSuccessfully ? asked.Result : null);
+}
+void Press(string button) => window.FindControl<Button>(button)!.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+Check(Said(() => Press("NoticeYes")) == (true, true), "Yes answers yes");
+Check(Said(() => Press("NoticeNo")) == (true, false), "No answers no");
+Check(Said(Escape) == (true, null), "Esc puts it off");
+Task<bool?>? second = null;
+async Task AskAgain(Task<bool?> first)
+{
+    await first;
+    second = window.AskAsync(question);
+}
+var firstOne = window.AskAsync(question);
+var chained = AskAgain(firstOne);
+Press("NoticeYes");
+Dispatcher.UIThread.RunJobs();
+Check(firstOne.IsCompleted && second is { IsCompleted: false } && notices.IsVisible, "the one that comes after an answer stays");
+Press("NoticeNo");
+Dispatcher.UIThread.RunJobs();
+Check(second is { IsCompletedSuccessfully: true, Result: false }, "and has its own answer");
 
 Console.WriteLine(wrong == 0 ? "shots: ok" : $"shots: {wrong} wrong");
 return wrong == 0 ? 0 : 1;

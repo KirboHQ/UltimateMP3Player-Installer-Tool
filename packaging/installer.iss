@@ -3,7 +3,7 @@
 
 #define AppName "Ultimate MP3 Player Installer"
 #ifndef AppVersion
-  #define AppVersion "1.2.0"
+  #define AppVersion "1.2.1"
 #endif
 #define AppExe "UltimateMP3PlayerInstaller.exe"
 

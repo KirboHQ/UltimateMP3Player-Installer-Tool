@@ -58,12 +58,14 @@ public partial class MainWindow
 
     private void Answer(bool? answer)
     {
+        // (taken away first, or closing it would answer null in its place; and answered last, since what comes next may show another)
         var waiting = _noticeAnswer;
+        _noticeAnswer = null;
         CloseNotice();
         waiting?.TrySetResult(answer);
     }
 
-    private async Task<bool?> AskAsync(Notice notice)
+    internal async Task<bool?> AskAsync(Notice notice)
     {
         ShowNotice(notice);
         return await _noticeAnswer!.Task.WaitAsync(Ct);
