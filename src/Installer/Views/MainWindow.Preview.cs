@@ -5,6 +5,11 @@ public partial class MainWindow
 {
     internal static bool Previewing { get; set; }
 
+    private static ComputerLibrary MadeUpLibrary() => new()
+    {
+        Songs = 148, Playlists = 6, Files = new[] { new ComputerLibrary.Item("", "music/a.mp3", 1_240_000_000) },
+    };
+
     internal void Preview(string name)
     {
         _phone = new Usbmux.Device(1, "test");
@@ -12,7 +17,13 @@ public partial class MainWindow
         _phoneOs = "26.1";
         _appleId = "name@example.com";
         _release = new IpaRelease("5.1.1", "", 0, null);
+        _learned = "test";
+        _way = Way.App;
+        _library = null;
+        InstallSub.Text = L.T("Keep the cable plugged in. This takes about a minute.");
+        InstallStop.IsVisible = false;
         Sheet.IsVisible = false;
+        CloseNotice();
         Party.IsVisible = false;
         Phone.SetCable(CableState.Away);
         Phone.LockHintShown(true);
@@ -32,7 +43,6 @@ public partial class MainWindow
                 Go(ComputerPage, 1, Blue);
                 Phone.Show(Scene.Showcase);
                 Phone.ShowShot(1);
-                BlockerCard.IsVisible = false;
                 _serviceRow.Done(L.T("Ready"));
                 _appRow.Working(L.F("Downloading version {0}", "5.1.1"), 0.62);
                 break;
@@ -40,9 +50,26 @@ public partial class MainWindow
                 Go(ComputerPage, 1, Blue);
                 Phone.Show(Scene.Showcase);
                 Phone.ShowShot(2);
-                _ = SolveAsync(new BlockedException(Blocker.AppleDevices));
                 _serviceRow.Working(L.T("Checking"));
                 _appRow.Waiting();
+                ShowNotice(BlockerNotice(Blocker.AppleDevices));
+                break;
+            case "blocker-linux":
+                Go(ComputerPage, 1, Blue);
+                Phone.Show(Scene.Showcase);
+                Phone.ShowShot(2);
+                ShowNotice(BlockerNotice(Blocker.Usbmuxd));
+                break;
+            case "needs":
+                GoWelcome();
+                Phone.ShowShot(0);
+                ShowNeeds();
+                break;
+            case "needs-itself":
+                _memory.Phones["test"] = new Memory.PhoneRecord { Version = "5.1.1", InstalledUtc = DateTime.UtcNow.AddDays(-1), CanRenew = true, Renews = true, Vpn = true, HasSideStore = true, LeftSideStore = true };
+                ShowHome();
+                Phone.ShowShot(3);
+                ShowNeeds();
                 break;
             case "connect":
                 ConnectHelp.IsVisible = ConnectBack.IsVisible = true;
@@ -59,11 +86,6 @@ public partial class MainWindow
                 Phone.LockHintShown(false);
                 Phone.SetCable(CableState.In);
                 Phone.Say(L.T("Connected"));
-                break;
-            case "choice":
-                Go(ChoicePage, 2, Cyan);
-                Phone.Show(Scene.Home);
-                Phone.SetCable(CableState.In);
                 break;
             case "account":
                 AccountError.IsVisible = false;
@@ -89,7 +111,7 @@ public partial class MainWindow
                 CodeBox.Text = "123";
                 break;
             case "install":
-                PhoneRequestCard.IsVisible = ConfirmCard.IsVisible = false;
+                InstallTitle.Text = L.T("Installing the app");
                 InstallPercent.Text = "62%";
                 InstallBar.Set(0.62);
                 InstallStage.Text = L.T("Sending it to your iPhone");
@@ -99,19 +121,14 @@ public partial class MainWindow
                 Phone.Installing(0.62);
                 break;
             case "install-trust":
-                ConfirmCard.IsVisible = false;
                 InstallPercent.Text = "8%";
                 InstallBar.Set(0.08);
                 InstallStage.Text = L.T("Getting your iPhone ready");
-                PhoneRequestText.Text = L.T("Tap Trust on your iPhone, then enter its passcode");
-                PhoneRequestCard.IsVisible = true;
                 Go(InstallPage, 4, Pink);
-                Phone.Guide(Guides.TrustComputer());
                 Phone.SetCable(CableState.In);
+                AskOnPhone(PhoneRequest.Trust);
                 break;
             case "install-confirm":
-                PhoneRequestCard.IsVisible = false;
-                ConfirmCard.IsVisible = true;
                 InstallPercent.Text = "24%";
                 InstallBar.Set(0.24);
                 InstallStage.Text = L.T("Apple is preparing the signature");
@@ -119,9 +136,9 @@ public partial class MainWindow
                 Phone.Show(Scene.Home);
                 Phone.SetCable(CableState.In);
                 Phone.Installing(0.24);
+                ShowNotice(CertificateNotice());
                 break;
             case "moving":
-                PhoneRequestCard.IsVisible = ConfirmCard.IsVisible = false;
                 InstallTitle.Text = L.T("Updating the app");
                 InstallPercent.Text = "100%";
                 InstallBar.Set(1);
@@ -132,7 +149,6 @@ public partial class MainWindow
                 Phone.Installing(1);
                 break;
             case "install-sidestore":
-                PhoneRequestCard.IsVisible = ConfirmCard.IsVisible = false;
                 InstallTitle.Text = L.T("Installing SideStore");
                 InstallPercent.Text = "81%";
                 InstallBar.Set(0.81);
@@ -141,6 +157,49 @@ public partial class MainWindow
                 Phone.Show(Scene.Home);
                 Phone.SetCable(CableState.In);
                 Phone.Installing(1);
+                break;
+            case "self":
+            case "self2":
+            case "self3":
+            case "self4":
+                PhoneView.GuideFrame = name == "self" ? 1 : 0;
+                Go(SelfPage, 5, Amber);
+                ShowSelf(name switch { "self2" => 0, "self3" => 1, "self4" => 2, _ => -1 });
+                break;
+            case "bring":
+            case "bring-look":
+                ShowBring(MadeUpLibrary(), name == "bring" ? 5 : 0);
+                _songsRow.IsChecked = name == "bring";
+                break;
+            case "bringing":
+                InstallTitle.Text = L.T("Bringing your things");
+                InstallSub.Text = L.T("Keep the cable plugged in. How long it takes depends on how much there is.");
+                InstallPercent.Text = "38%";
+                InstallBar.Set(0.38);
+                InstallStage.Text = L.T("Sending everything to your iPhone");
+                InstallStop.IsVisible = true;
+                Go(InstallPage, 5, Pink);
+                Phone.OpenApp();
+                Phone.SetCable(CableState.In);
+                break;
+            case "brought":
+                ShowDone(false, true, new Memory.PhoneRecord { InstalledUtc = DateTime.UtcNow }, brought: true);
+                Phone.SetCable(CableState.In);
+                Party.At(1.7);
+                break;
+            case "home-bring":
+            case "home-bring-notice":
+                _library = MadeUpLibrary();
+                _memory.Phones["test"] = new Memory.PhoneRecord { Version = "5.1.1", InstalledUtc = DateTime.UtcNow.AddDays(-3), CanRenew = true, CanImport = true };
+                ShowHome();
+                Phone.ShowShot(3);
+                if (name == "home-bring-notice") ShowNotice(PendingNotices().First(p => p.Id == "bring").Notice);
+                break;
+            case "sidestore-stuck":
+                _memory.Phones["test"] = new Memory.PhoneRecord { Version = "5.1.1", InstalledUtc = DateTime.UtcNow.AddDays(-1) };
+                ShowHome();
+                Phone.ShowShot(3);
+                ShowNotice(SideStoreNotice(Releases.SideStoreVersion));
                 break;
             case "sidestore":
             case "sidestore2":
@@ -171,22 +230,28 @@ public partial class MainWindow
                 Phone.SetCable(CableState.In);
                 break;
             case "done":
-                ShowDone(true, false);
+                ShowDone(true, false, new Memory.PhoneRecord { InstalledUtc = DateTime.UtcNow });
                 Phone.SetCable(CableState.In);
                 Party.At(0.75);
                 break;
             case "renewed":
-                ShowDone(false, true);
+                ShowDone(false, true, new Memory.PhoneRecord { InstalledUtc = DateTime.UtcNow });
                 Phone.SetCable(CableState.In);
                 Party.At(1.7);
                 break;
+            case "done-itself":
+                ShowDone(true, false, new Memory.PhoneRecord { InstalledUtc = DateTime.UtcNow, Renews = true, CanRenew = true, Vpn = true }, setUp: true);
+                Phone.SetCable(CableState.In);
+                Party.At(0.75);
+                break;
             case "done-sidestore":
-                ShowDone(false, false, sideStore: true, handedOver: true);
+                _way = Way.SideStore;
+                ShowDone(false, false, new Memory.PhoneRecord { InstalledUtc = DateTime.UtcNow, SideStore = true }, setUp: true);
                 Phone.SetCable(CableState.In);
                 Party.At(0.75);
                 break;
             case "renewed-sidestore":
-                ShowDone(false, true, alongSideStore: true);
+                ShowDone(false, true, new Memory.PhoneRecord { InstalledUtc = DateTime.UtcNow, SideStore = true });
                 Phone.SetCable(CableState.In);
                 Party.At(1.7);
                 break;
@@ -207,9 +272,39 @@ public partial class MainWindow
                 _memory.WslLeftover = true;
                 ShowHome();
                 Phone.ShowShot(3);
+                ShowNotice(PendingNotices().First().Notice);
+                break;
+            case "home-itself":
+                _memory.WslLeftover = false;
+                _memory.Phones["test"] = new Memory.PhoneRecord { Version = "5.1.1", InstalledUtc = DateTime.UtcNow.AddDays(-9), ExpiresUtc = DateTime.UtcNow.AddDays(4.5), CanRenew = true, Renews = true, Vpn = true };
+                ShowHome();
+                Phone.ShowShot(3);
+                break;
+            case "home-left":
+            case "home-left-notice":
+                _memory.WslLeftover = true;
+                _memory.Phones["test"] = new Memory.PhoneRecord { Version = "5.1.1", InstalledUtc = DateTime.UtcNow.AddDays(-9), ExpiresUtc = DateTime.UtcNow.AddDays(4.5), CanRenew = true, Renews = true, Vpn = true, HasSideStore = true, LeftSideStore = true };
+                ShowHome();
+                Phone.ShowShot(3);
+                if (name == "home-left-notice") ShowNotice(PendingNotices().First().Notice);
+                _memory.WslLeftover = false;
+                break;
+            case "home-vpn":
+            case "home-vpn-notice":
+                _memory.Phones["test"] = new Memory.PhoneRecord { Version = "5.1.1", InstalledUtc = DateTime.UtcNow.AddDays(-4), CanRenew = true, Renews = true };
+                ShowHome();
+                Phone.ShowShot(3);
+                if (name == "home-vpn-notice") ShowNotice(PendingNotices().First().Notice);
+                break;
+            case "home-self":
+            case "home-self-notice":
+                _memory.Phones["test"] = new Memory.PhoneRecord { Version = "5.1.1", InstalledUtc = DateTime.UtcNow.AddDays(-3), CanRenew = true };
+                ShowHome();
+                Phone.ShowShot(3);
+                if (name == "home-self-notice") ShowNotice(PendingNotices().First().Notice);
                 break;
             case "home-sidestore":
-                _memory.Phones["test"] = new Memory.PhoneRecord { Version = "5.1.1", InstalledUtc = DateTime.UtcNow.AddDays(-12), SideStore = true };
+                _memory.Phones["test"] = new Memory.PhoneRecord { Version = "5.1.1", InstalledUtc = DateTime.UtcNow.AddDays(-12), ExpiresUtc = DateTime.UtcNow.AddDays(5.5), SideStore = true };
                 _memory.WslLeftover = false;
                 ShowHome();
                 Phone.ShowShot(3);

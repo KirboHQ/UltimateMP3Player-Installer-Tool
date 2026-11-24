@@ -107,3 +107,21 @@ jobs:
         with:
           name: ${{ matrix.asset }}
           path: out/${{ matrix.asset }}
+
+      # What the iPhone's app renews itself with: not for this program, but made from the same sources. The app's own build takes it
+      # from the release by name, pinned with its hash. Last, so that the Mac's package never depends on it.
+      - name: The app's framework (macOS)
+        if: runner.os == 'macOS'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          bash helper/ios.sh out/ios
+          (cd out/ios && zip -qry ../umprenew-ios.zip umprenew.framework)
+          if [ -n "$TAG" ]; then gh release upload "$TAG" out/umprenew-ios.zip --clobber; fi
+
+      - name: Keep the framework for trying (run by hand)
+        if: runner.os == 'macOS' && github.event_name != 'release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: umprenew-ios.zip
+          path: out/umprenew-ios.zip

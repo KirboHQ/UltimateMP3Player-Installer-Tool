@@ -1,5 +1,6 @@
 # Writes licenses/Helper-THIRD-PARTY-NOTICES.txt: every Rust library inside ump-helper on the three systems the packages are
-# built for, with its license and its own notice files. Run it from helper/ after Cargo.lock changes:
+# built for, with its license and its own notice files; and App-THIRD-PARTY-NOTICES.txt, the same for what the iPhone's app carries
+# (ios.sh). Run it from helper/ after Cargo.lock changes:
 #   python notices.py
 # Build-time-only crates (build scripts, macros) aren't in the program, so they aren't listed.
 import io
@@ -8,16 +9,19 @@ import os
 import subprocess
 import sys
 
-TARGETS = ["x86_64-pc-windows-msvc", "x86_64-unknown-linux-gnu", "aarch64-apple-darwin"]
-OUT = os.path.join("..", "licenses", "Helper-THIRD-PARTY-NOTICES.txt")
+HELPER = (os.path.join("..", "licenses", "Helper-THIRD-PARTY-NOTICES.txt"), [],
+          ["x86_64-pc-windows-msvc", "x86_64-unknown-linux-gnu", "aarch64-apple-darwin"],
+          "ump-helper (the program beside Ultimate MP3 Player Installer that signs and installs)")
+APP = ("App-THIRD-PARTY-NOTICES.txt", ["--features", "phone"], ["aarch64-apple-ios"],
+       "umprenew (what Ultimate MP3 Player renews itself with on the iPhone)")
 # For a library whose package carries no notice file of its own.
 NO_FILE = ("Its package has no notice file: the license is the standard text, Apache 2.0 at the start of this file, MIT in\n"
            "THIRD-PARTY-NOTICES.txt, LGPL 2.1 in LGPL-2.1.txt; the copyright holders are its authors.\n\n")
 
 
-def inside(target):
+def inside(target, features):
     meta = json.loads(subprocess.run(
-        ["cargo", "metadata", "--format-version", "1", "--locked", "--filter-platform", target],
+        ["cargo", "metadata", "--format-version", "1", "--locked", "--filter-platform", target] + features,
         capture_output=True, check=True).stdout)
     packages = {p["id"]: p for p in meta["packages"]}
     nodes = {n["id"]: n for n in meta["resolve"]["nodes"]}
@@ -54,15 +58,15 @@ def is_apache(text):
     return "Apache License" in text and "Version 2.0, January 2004" in text and "END OF TERMS AND CONDITIONS" in text
 
 
-def main():
+def write(path, features, targets, what):
     all_packages = {}
     systems = {}
-    for t in TARGETS:
-        for i, p in inside(t).items():
+    for t in targets:
+        for i, p in inside(t, features).items():
             all_packages[i] = p
             systems.setdefault(i, []).append(t)
     out = io.StringIO()
-    out.write("ump-helper (the program beside Ultimate MP3 Player Installer that signs and installs) - the Rust libraries\n")
+    out.write(what + " - the Rust libraries\n")
     out.write("inside it, each under its own license. Where a library offers a choice of licenses, it's used under the first\n")
     out.write("one it names. The Apache License 2.0 text is at the start, once, for every library under it; every other notice\n")
     out.write("is each library's own file.\n\n")
@@ -73,7 +77,7 @@ def main():
         for _, text in files:
             if apache_text is None and is_apache(text):
                 apache_text = text
-        only = "" if len(systems[i]) == len(TARGETS) else " (only on " + ", ".join(systems[i]) + ")"
+        only = "" if len(systems[i]) == len(targets) else " (only on " + ", ".join(systems[i]) + ")"
         entries.append((p, only, [(n, t) for n, t in files if not is_apache(t)]))
     if apache_text:
         out.write("=" * 100 + "\nApache License 2.0\n" + "=" * 100 + "\n\n" + apache_text + "\n\n")
@@ -90,8 +94,13 @@ def main():
             out.write(f"--- {name}\n\n{text}\n\n")
         if not files:
             out.write(NO_FILE)
-    io.open(OUT, "w", encoding="utf-8", newline="\n").write(out.getvalue())
-    print(f"{len(entries)} libraries -> {OUT}")
+    io.open(path, "w", encoding="utf-8", newline="\n").write(out.getvalue())
+    print(f"{len(entries)} libraries -> {path}")
+
+
+def main():
+    write(*HELPER)
+    write(*APP)
 
 
 if __name__ == "__main__":

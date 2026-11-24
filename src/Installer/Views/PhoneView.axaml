@@ -109,7 +109,7 @@
             <!-- The island, which also says things. -->
             <Border x:Name="Island" Width="92" Height="27" CornerRadius="14" Background="Black" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,21,0,0" ClipToBounds="True">
                 <StackPanel x:Name="IslandText" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="7" Opacity="0">
-                    <Path x:Name="IslandIcon" Classes="icon" Data="{StaticResource IconCheck}" Width="13" Height="13" Stroke="{StaticResource Good}" StrokeThickness="2.6"/>
+                    <Path x:Name="IslandIcon" Classes="icon" Data="{StaticResource IconCheck}" Width="13" Height="9.4" VerticalAlignment="Center" Stroke="{StaticResource Good}" StrokeThickness="2.6"/>
                     <TextBlock x:Name="IslandLabel" FontSize="12.5" FontWeight="SemiBold" Foreground="White" VerticalAlignment="Center"/>
                 </StackPanel>
             </Border>

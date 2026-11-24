@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Media.Immutable;
@@ -354,15 +355,66 @@ public sealed class QrCode : Border
     }
 }
 
+// How many of the signature's seven days are left.
+public sealed class Week : Control
+{
+    private int _left;
+    private IBrush _brush = Brushes.White;
+
+    public void Show(double days, IBrush brush)
+    {
+        _left = Math.Clamp((int)Math.Ceiling(days), 0, Memory.SignedDays);
+        _brush = brush;
+        InvalidateVisual();
+    }
+
+    public override void Render(DrawingContext context)
+    {
+        const double gap = 5;
+        double w = (Bounds.Width - gap * (Memory.SignedDays - 1)) / Memory.SignedDays, h = Bounds.Height;
+        for (int i = 0; i < Memory.SignedDays; i++)
+            context.DrawRectangle(i < _left ? _brush : Icons.Brush("Line"), null, new RoundedRect(new Rect(i * (w + gap), 0, w, h), h / 2));
+    }
+}
+
+// A word or two in a pill, in the colour of what it means.
+public sealed class Badge : Border
+{
+    private readonly TextBlock _text = new() { FontSize = 11.5, FontWeight = FontWeight.Bold, LetterSpacing = 0.8 };
+
+    public Badge()
+    {
+        CornerRadius = new CornerRadius(11);
+        Padding = new Thickness(10, 3);
+        BorderThickness = new Thickness(1);
+        Child = _text;
+    }
+
+    public void Set(string text, IBrush brush)
+    {
+        _text.Text = text;
+        _text.Foreground = brush;
+        BorderBrush = brush;
+    }
+}
+
 public static class Icons
 {
-    public static Avalonia.Controls.Shapes.Path Make(string key, IBrush? stroke = null, double size = 18)
+    // A drawing that isn't square, stretched, goes to the top left of its box: so the drawing gets a box of its own proportions, in
+    // the middle of the square one.
+    public static Control Make(string key, IBrush? stroke = null, double size = 18)
     {
-        var path = new Avalonia.Controls.Shapes.Path { Width = size, Height = size };
+        var path = new Avalonia.Controls.Shapes.Path { HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
         path.Classes.Add("icon");
-        if (Application.Current!.TryFindResource(key, out var g) && g is Geometry geometry) path.Data = geometry;
+        if (Application.Current!.TryFindResource(key, out var g) && g is Geometry geometry)
+        {
+            path.Data = geometry;
+            var (w, h) = (geometry.Bounds.Width, geometry.Bounds.Height);
+            path.Width = size * w / Math.Max(w, h);
+            path.Height = size * h / Math.Max(w, h);
+        }
         if (stroke != null) path.Stroke = stroke;
-        return path;
+        return new Panel { Width = size, Height = size, Children = { path } };
     }
 
     public static FontFamily Display => Application.Current!.TryFindResource("Display", out var f) && f is FontFamily family ? family : FontFamily.Default;

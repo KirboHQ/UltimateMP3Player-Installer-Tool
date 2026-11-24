@@ -38,6 +38,10 @@
         <StreamGeometry x:Key="IconCopy">M9,9 H20 V20 H9 Z M5,15 H4 V4 H15 V5</StreamGeometry>
         <StreamGeometry x:Key="IconWarn">M12,9 V13 M12,17 H12.01 M10.3,3.9 L1.8,18 A2,2 0 0 0 3.5,21 H20.5 A2,2 0 0 0 22.2,18 L13.7,3.9 A2,2 0 0 0 10.3,3.9 Z</StreamGeometry>
         <StreamGeometry x:Key="IconChevron">M9,5 L16,12 L9,19</StreamGeometry>
+        <StreamGeometry x:Key="IconBin">M4,7 H20 M9,7 V4 H15 V7 M6,7 L7,20 H17 L18,7 M10,11 V16 M14,11 V16</StreamGeometry>
+        <StreamGeometry x:Key="IconQuestion">M12,21 A9,9 0 1 0 12,3 A9,9 0 0 0 12,21 Z M9.4,9.4 A2.7,2.7 0 1 1 12,12.6 V13.6 M12,16.8 H12.01</StreamGeometry>
+        <StreamGeometry x:Key="IconSpark">M12,3 L14.4,9.6 L21,12 L14.4,14.4 L12,21 L9.6,14.4 L3,12 L9.6,9.6 Z</StreamGeometry>
+        <StreamGeometry x:Key="IconComputer">M4,5 H20 V16 H4 Z M9,20 H15 M12,16 V20</StreamGeometry>
         <StreamGeometry x:Key="IconPhone">M7,2 H17 A2,2 0 0 1 19,4 V20 A2,2 0 0 1 17,22 H7 A2,2 0 0 1 5,20 V4 A2,2 0 0 1 7,2 Z M11,18.5 H13</StreamGeometry>
     </Application.Resources>
 
@@ -190,6 +194,46 @@
         </Style>
         <Style Selector="Button.choice:focus-visible /template/ Border#Ring">
             <Setter Property="IsVisible" Value="True"/>
+        </Style>
+
+        <!-- A card to tick. -->
+        <Style Selector="CheckBox.pick">
+            <Setter Property="Background" Value="{StaticResource Fill}"/>
+            <Setter Property="Padding" Value="18,10"/>
+            <Setter Property="CornerRadius" Value="16"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Panel>
+                        <Border x:Name="Back" Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}"/>
+                        <Border x:Name="Ring" BorderBrush="White" BorderThickness="2" CornerRadius="{TemplateBinding CornerRadius}" Margin="-3" IsVisible="False"/>
+                        <Grid ColumnDefinitions="Auto,*" Margin="{TemplateBinding Padding}">
+                            <Panel Width="24" Height="24" VerticalAlignment="Center">
+                                <Border BorderBrush="{StaticResource Faint}" BorderThickness="1.6" CornerRadius="8"/>
+                                <Border x:Name="Tick" Background="{StaticResource Brand}" CornerRadius="8" IsVisible="False">
+                                    <!-- (not an "icon": in a template that class's 18 by 18 would win over these) -->
+                                    <Path Data="{StaticResource IconCheck}" Stroke="White" StrokeThickness="2.2" StrokeLineCap="Round" StrokeJoin="Round" Stretch="Uniform"
+                                          Width="13" Height="9.9" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                            </Panel>
+                            <ContentPresenter Grid.Column="1" Content="{TemplateBinding Content}" Margin="16,0,0,0" VerticalContentAlignment="Center" RecognizesAccessKey="False"/>
+                        </Grid>
+                    </Panel>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="CheckBox.pick:checked /template/ Border#Tick">
+            <Setter Property="IsVisible" Value="True"/>
+        </Style>
+        <Style Selector="CheckBox.pick:pointerover /template/ Border#Back">
+            <Setter Property="Background" Value="{StaticResource FillHover}"/>
+        </Style>
+        <Style Selector="CheckBox.pick:focus-visible /template/ Border#Ring">
+            <Setter Property="IsVisible" Value="True"/>
+        </Style>
+        <Style Selector="CheckBox.pick:disabled">
+            <Setter Property="Opacity" Value="0.4"/>
         </Style>
 
         <Style Selector="Button.link">

@@ -647,4 +647,18 @@ public static class Guides
         new PhoneView.GuidePage("", Screen: new PhoneView.GuideScreen("", Releases.SideStoreSourceLink, "SideStore", Camera: true)),
         new PhoneView.GuidePage("", Screen: new PhoneView.GuideScreen("Ultimate MP3 Player", "KirboHQ", "FREE", AppIcon: true)),
     };
+
+    // The app's own part: its Settings, where it says when its signature ends and renews it.
+    public static PhoneView.GuidePage[] RenewInApp() => new[]
+    {
+        new PhoneView.GuidePage("", Screen: new PhoneView.GuideScreen("Ultimate MP3 Player", L.T("Settings › Renewal"), L.T("Renew now"), AppIcon: true)),
+    };
+
+    // What the app asks as it opens, with something sent to it from here.
+    public static PhoneView.GuidePage[] FromComputer() => new[]
+    {
+        new PhoneView.GuidePage("", Screen: new PhoneView.GuideScreen(L.T("From your computer"), L.T("Songs, playlists, look and settings"), L.T("Add it all"), AppIcon: true)),
+    };
+
+    public static PhoneView.GuidePage[] ConnectVpn() => LocalDevVpn()[2..];
 }

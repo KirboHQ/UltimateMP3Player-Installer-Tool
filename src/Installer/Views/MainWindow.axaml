@@ -45,12 +45,15 @@
                             <Button x:Name="StartButton" Classes="primary">
                                 <StackPanel Orientation="Horizontal" Spacing="12">
                                     <TextBlock Text="{local:T 'Install it now'}"/>
-                                    <Path Classes="icon" Data="{StaticResource IconArrow}" Stroke="White" Width="17" Height="17" StrokeThickness="2.4" VerticalAlignment="Center"/>
+                                    <Path Classes="icon" Data="{StaticResource IconArrow}" Stroke="White" Width="17" Height="14.9" StrokeThickness="2.4" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
                         </StackPanel>
                         <TextBlock Classes="small" Margin="0,16,0,0" Text="{local:T 'I\'ll guide you. All it takes is a cable and your free Apple ID: about 5 minutes.'}"/>
-                        <Button x:Name="WhyButton" Classes="link" Margin="0,8,0,0" Content="{local:T 'Why isn\'t it on the App Store?'}"/>
+                        <StackPanel Orientation="Horizontal" Spacing="22" Margin="0,8,0,0">
+                            <Button x:Name="WelcomeNeeds" Classes="link" Content="{local:T 'What it needs'}"/>
+                            <Button x:Name="WhyButton" Classes="link" Content="{local:T 'Why isn\'t it on the App Store?'}"/>
+                        </StackPanel>
                     </StackPanel>
 
                     <!-- The computer -->
@@ -58,16 +61,6 @@
                         <TextBlock Classes="h1" Text="{local:T 'Getting your computer ready'}"/>
                         <TextBlock Classes="sub" Margin="0,12,0,0" Text="{local:T 'It happens only once, and I do nearly all of it.'}"/>
                         <StackPanel x:Name="ComputerRows" Margin="0,26,0,0" Spacing="18"/>
-                        <Border x:Name="BlockerCard" Classes="card" Margin="0,24,0,0" IsVisible="False">
-                            <StackPanel Spacing="10">
-                                <TextBlock x:Name="BlockerTitle" Classes="title"/>
-                                <TextBlock x:Name="BlockerText" Classes="sub" FontSize="14.5" LineHeight="21"/>
-                                <StackPanel Orientation="Horizontal" Spacing="16" Margin="0,6,0,0">
-                                    <Button x:Name="BlockerButton" Classes="primary" Height="46" FontSize="15" CornerRadius="23" Padding="26,0"/>
-                                    <Button x:Name="BlockerBack" Classes="link quiet" VerticalAlignment="Center" Content="{local:T 'Back'}"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
                     </StackPanel>
 
                     <!-- The phone -->
@@ -76,32 +69,6 @@
                         <TextBlock Classes="sub" x:Name="ConnectText" Margin="0,12,0,0" Text="{local:T 'Use the cable and unlock it. I\'ll recognize it by myself.'}"/>
                         <TextBlock x:Name="ConnectHelp" Classes="small" Margin="0,22,0,0" Text="{local:T 'Can\'t see it? Unplug the cable and plug it in again, with the iPhone unlocked. Still nothing: try another cable or port, some cables only charge.'}"/>
                         <Button x:Name="ConnectBack" Classes="link quiet" Margin="0,14,0,0" Content="{local:T 'Back'}"/>
-                    </StackPanel>
-
-                    <!-- Who renews it -->
-                    <StackPanel x:Name="ChoicePage" IsVisible="False" VerticalAlignment="Top" Margin="0,40,0,0">
-                        <TextBlock Classes="h1" Text="{local:T 'Who renews it?'}"/>
-                        <TextBlock Classes="sub" Margin="0,12,0,0" Text="{local:T 'Apple keeps an app signed with a free Apple ID working for 7 days, then it has to be renewed.'}"/>
-                        <Button x:Name="ChooseCable" Classes="choice" Margin="0,24,0,0">
-                            <Grid ColumnDefinitions="*,Auto">
-                                <StackPanel Spacing="4">
-                                    <TextBlock Classes="title" Text="{local:T 'This computer, by cable'}"/>
-                                    <TextBlock Classes="small" Foreground="{StaticResource Soft}" Text="{local:T 'Every 7 days, plug in the iPhone and click Renew here. Nothing else to install.'}"/>
-                                </StackPanel>
-                                <Path Grid.Column="1" Classes="icon" Data="{StaticResource IconChevron}" Stroke="{StaticResource Faint}" Width="16" Height="16" Margin="14,0,0,0" VerticalAlignment="Center"/>
-                            </Grid>
-                        </Button>
-                        <Button x:Name="ChooseSideStore" Classes="choice" Margin="0,12,0,0">
-                            <Grid ColumnDefinitions="*,Auto">
-                                <StackPanel Spacing="4">
-                                    <TextBlock Classes="title" Text="{local:T 'The iPhone by itself, with SideStore'}"/>
-                                    <TextBlock Classes="small" Foreground="{StaticResource Soft}" Text="{local:T 'A few more taps on the iPhone today. Then SideStore renews it over Wi-Fi, and brings the updates too.'}"/>
-                                </StackPanel>
-                                <Path Grid.Column="1" Classes="icon" Data="{StaticResource IconChevron}" Stroke="{StaticResource Faint}" Width="16" Height="16" Margin="14,0,0,0" VerticalAlignment="Center"/>
-                            </Grid>
-                        </Button>
-                        <TextBlock Classes="small" Margin="0,16,0,0" Text="{local:T 'You can switch to SideStore later too, from here.'}"/>
-                        <Button x:Name="ChoiceBack" Classes="link quiet" Margin="0,14,0,0" Content="{local:T 'Back'}"/>
                     </StackPanel>
 
                     <!-- The Apple ID -->
@@ -120,7 +87,7 @@
                             <local:Spinner x:Name="LoginSpinner" IsVisible="False" VerticalAlignment="Center"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,18,0,0">
-                            <Path Classes="icon" Data="{StaticResource IconLock}" Stroke="{StaticResource Faint}" Width="14" Height="14" VerticalAlignment="Center"/>
+                            <Path Classes="icon" Data="{StaticResource IconLock}" Stroke="{StaticResource Faint}" Width="12.6" Height="14" VerticalAlignment="Center"/>
                             <TextBlock Classes="small" VerticalAlignment="Center" Text="{local:T 'Your password goes only to Apple, and it isn\'t saved.'}"/>
                         </StackPanel>
                         <Button x:Name="TrustButton" Classes="link" Margin="0,4,0,0" Content="{local:T 'Can I trust this?'}"/>
@@ -141,26 +108,22 @@
                     <!-- Installing -->
                     <StackPanel x:Name="InstallPage" IsVisible="False" VerticalAlignment="Top" Margin="0,40,0,0">
                         <TextBlock Classes="h1" x:Name="InstallTitle" Text="{local:T 'Installing the app'}"/>
-                        <TextBlock Classes="sub" Margin="0,12,0,0" Text="{local:T 'Keep the cable plugged in. This takes about a minute.'}"/>
+                        <TextBlock x:Name="InstallSub" Classes="sub" Margin="0,12,0,0"/>
                         <TextBlock x:Name="InstallPercent" FontFamily="{StaticResource Display}" FontSize="76" FontWeight="SemiBold" Foreground="{StaticResource Brand}" Margin="0,22,0,0" Text="0%"/>
                         <local:Bar x:Name="InstallBar" Height="6" Margin="0,8,0,0"/>
                         <TextBlock x:Name="InstallStage" Classes="sub" FontSize="15" Margin="0,12,0,0"/>
-                        <Border x:Name="PhoneRequestCard" Classes="card" Margin="0,20,0,0" IsVisible="False">
-                            <StackPanel Orientation="Horizontal" Spacing="14">
-                                <Path Classes="icon" Data="{StaticResource IconPhone}" Stroke="{StaticResource Warn}" Width="22" Height="22" VerticalAlignment="Center"/>
-                                <TextBlock x:Name="PhoneRequestText" Classes="title" VerticalAlignment="Center" MaxWidth="400"/>
-                            </StackPanel>
-                        </Border>
-                        <Border x:Name="ConfirmCard" Classes="card" Margin="0,20,0,0" IsVisible="False">
-                            <StackPanel Spacing="10">
-                                <TextBlock Classes="title" Text="{local:T 'Replace a certificate?'}"/>
-                                <TextBlock Classes="sub" FontSize="14.5" LineHeight="21" Text="{local:T 'A free Apple ID holds only a couple of signing certificates, and they\'re all in use. If you replace one, other apps signed with it (with SideStore or AltStore, say) will stop opening until you renew them.'}"/>
-                                <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,6,0,0">
-                                    <Button x:Name="ConfirmYes" Classes="soft" Content="{local:T 'Replace it'}"/>
-                                    <Button x:Name="ConfirmNo" Classes="soft" Content="{local:T 'Stop'}"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
+                        <Button x:Name="InstallStop" Classes="link quiet" Margin="0,18,0,0" IsVisible="False" Content="{local:T 'Stop'}"/>
+                    </StackPanel>
+
+                    <!-- What the app on this computer has, for the one on the iPhone -->
+                    <StackPanel x:Name="BringPage" IsVisible="False" VerticalAlignment="Top" Margin="0,40,0,0">
+                        <TextBlock Classes="h1" Text="{local:T 'Bring your things too'}"/>
+                        <TextBlock Classes="sub" Margin="0,10,0,0" FontSize="15.5" LineHeight="23" Text="{local:T 'Ultimate MP3 Player is on this computer too. Choose what to bring: it\'s added to what\'s on the iPhone, nothing is deleted.'}"/>
+                        <StackPanel x:Name="BringRows" Margin="0,18,0,0" Spacing="8"/>
+                        <StackPanel Orientation="Horizontal" Spacing="20" Margin="0,20,0,0">
+                            <Button x:Name="BringNext" Classes="primary" Content="{local:T 'Send it to the iPhone'}"/>
+                            <Button x:Name="BringBack" Classes="link quiet" VerticalAlignment="Center"/>
+                        </StackPanel>
                     </StackPanel>
 
                     <!-- The last two taps -->
@@ -172,6 +135,28 @@
                             <Button x:Name="ActivateNext" Classes="primary" Content="{local:T 'Done, next'}"/>
                             <Button x:Name="ActivateSkip" Classes="link quiet" VerticalAlignment="Center" Content="{local:T 'Already done'}"/>
                         </StackPanel>
+                    </StackPanel>
+
+                    <!-- The app renews itself: what it needs on the iPhone -->
+                    <StackPanel x:Name="SelfPage" IsVisible="False" VerticalAlignment="Top" Margin="0,40,0,0">
+                        <TextBlock Classes="h1" Text="{local:T 'It can renew itself'}"/>
+                        <TextBlock Classes="sub" Margin="0,10,0,0" FontSize="15.5" LineHeight="23" Text="{local:T 'Apple keeps the app working for 7 days at a time. It can renew itself on the iPhone, with no cable: for that it needs LocalDevVPN, a small free app.'}"/>
+                        <StackPanel x:Name="SelfCards" Margin="0,18,0,0" Spacing="10"/>
+                        <Grid ColumnDefinitions="Auto,*" Margin="0,16,0,0">
+                            <local:QrCode x:Name="SelfQr" Width="126" Height="126" Margin="0,0,18,0" VerticalAlignment="Top"/>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="10">
+                                <TextBlock x:Name="SelfScan" Classes="small" Text="{local:T 'Point the iPhone\'s camera at this code, then tap the yellow button that comes up.'}"/>
+                                <StackPanel x:Name="SelfWait" Orientation="Horizontal" Spacing="10">
+                                    <local:Spinner Width="16" Height="16" VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="SelfWaitText" Classes="small" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="18">
+                                    <Button x:Name="SelfNext" Classes="primary"/>
+                                    <Button x:Name="SelfLater" Classes="link quiet" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                        <Button x:Name="SelfSideStore" Classes="link quiet" Margin="0,14,0,0" Content="{local:T 'I\'d rather use SideStore'}"/>
                     </StackPanel>
 
                     <!-- SideStore takes over -->
@@ -219,32 +204,35 @@
                     <!-- Coming back -->
                     <StackPanel x:Name="HomePage" IsVisible="False" VerticalAlignment="Center" Margin="0,-30,0,0">
                         <TextBlock Classes="h1" FontSize="52" LineHeight="58" Text="{local:T 'Welcome back'}"/>
-                        <Border Classes="card" Margin="0,22,0,0">
+                        <!-- What it needs or doesn't need any more: each opens its notice again. -->
+                        <StackPanel x:Name="HomeNotices" Margin="0,18,0,0" Spacing="10" IsVisible="False"/>
+                        <Border Classes="card" Margin="0,18,0,0">
                             <StackPanel Spacing="3">
-                                <TextBlock x:Name="HomePhone" Classes="title" FontSize="18"/>
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock x:Name="HomePhone" Classes="title" FontSize="18"/>
+                                    <local:Badge x:Name="HomePlugged" Grid.Column="1" VerticalAlignment="Center"/>
+                                </Grid>
                                 <TextBlock x:Name="HomeState" Classes="sub" FontSize="15"/>
-                                <TextBlock x:Name="HomeExpiry" FontSize="15" FontWeight="SemiBold" Margin="0,4,0,0"/>
+                                <local:Week x:Name="HomeWeek" Height="8" Margin="0,12,0,4"/>
+                                <TextBlock x:Name="HomeExpiry" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                                <TextBlock x:Name="HomeHint" Classes="small" Foreground="{StaticResource Soft}" Margin="0,8,0,0" Text="{local:T 'Plugged in and not showing up? Unplug it and plug it in again, with the iPhone unlocked.'}"/>
                             </StackPanel>
                         </Border>
-                        <Button x:Name="HomeButton" Classes="primary" Margin="0,22,0,0" HorizontalAlignment="Left"/>
-                        <TextBlock x:Name="HomeHint" Classes="small" Margin="0,14,0,0" IsVisible="False" Text="{local:T 'Plugged in and not showing up? Unplug it and plug it in again, with the iPhone unlocked.'}"/>
-                        <Button x:Name="HomeRepair" Classes="link" Margin="0,12,0,0" IsVisible="False" Content="{local:T 'Repair SideStore'}"/>
-                        <Button x:Name="HomeSideStore" Classes="link" Margin="0,12,0,0" IsVisible="False"/>
-                        <TextBlock x:Name="HomeAccount" Classes="small" Margin="0,20,0,0"/>
+                        <StackPanel Orientation="Horizontal" Spacing="14" Margin="0,20,0,0">
+                            <Button x:Name="HomeButton" Classes="primary"/>
+                            <Button x:Name="HomeSelf" Classes="soft" Height="56" CornerRadius="28" Content="{local:T 'Let it renew itself'}"/>
+                        </StackPanel>
+                        <Button x:Name="HomeBring" Classes="link" Margin="0,14,0,-8" Content="{local:T 'Bring everything from this computer'}"/>
+                        <StackPanel Orientation="Horizontal" Spacing="22" Margin="0,16,0,0">
+                            <Button x:Name="HomeNeeds" Classes="link" Content="{local:T 'What it needs'}"/>
+                            <Button x:Name="HomeRepair" Classes="link" Content="{local:T 'Repair SideStore'}"/>
+                            <Button x:Name="HomeSideStore" Classes="link"/>
+                        </StackPanel>
+                        <TextBlock x:Name="HomeAccount" Classes="small" Margin="0,18,0,0"/>
                         <StackPanel Orientation="Horizontal" Spacing="22" Margin="0,2,0,0">
                             <Button x:Name="SignOutButton" Classes="link quiet" Content="{local:T 'Sign out of the Apple ID'}"/>
                             <Button x:Name="RemoveButton" Classes="link quiet" Content="{local:T 'Remove everything from this computer'}"/>
                         </StackPanel>
-                        <Border x:Name="WslCard" Classes="card" Margin="0,22,0,0" IsVisible="False">
-                            <StackPanel Spacing="10">
-                                <TextBlock Classes="title" Text="{local:T 'WSL isn\'t needed anymore'}"/>
-                                <TextBlock Classes="sub" FontSize="14.5" LineHeight="21" Text="{local:T 'The older version used it, and nothing else is in it now. If no other program needs it or the Virtual Machine Platform (some Android emulators do), I can turn both off: Windows asks your permission, and they go at the next restart.'}"/>
-                                <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,6,0,0">
-                                    <Button x:Name="WslRemove" Classes="soft" Content="{local:T 'Turn them off'}"/>
-                                    <Button x:Name="WslKeep" Classes="soft" Content="{local:T 'Keep them'}"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
                     </StackPanel>
 
                     <!-- When something goes wrong -->
@@ -274,15 +262,54 @@
 
         <local:Confetti x:Name="Party" IsHitTestVisible="False" IsVisible="False"/>
 
+        <!-- What can't go unnoticed: something that's needed, something that isn't any more, a decision, something to do on the
+             iPhone. Always this same box, on the text's side, so that the phone beside it can show what to tap. -->
+        <Panel x:Name="NoticeLayer" IsVisible="False" Opacity="0" KeyboardNavigation.TabNavigation="Cycle">
+            <Border x:Name="NoticeDim"/>
+            <Grid ColumnDefinitions="10*,11*">
+                <Border x:Name="NoticeBox" Grid.Column="1" Width="500" CornerRadius="26" Background="#1B1826" BorderBrush="{StaticResource Line}" BorderThickness="1"
+                        ClipToBounds="True" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,34,0">
+                    <StackPanel>
+                        <Border x:Name="NoticeEdge" Height="5"/>
+                        <StackPanel Margin="34,28,34,30">
+                            <StackPanel Orientation="Horizontal" Spacing="16">
+                                <Border x:Name="NoticeBadge" Width="56" Height="56" CornerRadius="28"/>
+                                <TextBlock x:Name="NoticeLabel" Classes="eyebrow" FontSize="13.5" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock x:Name="NoticeTitle" Classes="h1" FontSize="30" LineHeight="36" Margin="0,18,0,0"/>
+                            <TextBlock x:Name="NoticeText" Classes="sub" FontSize="16" LineHeight="24" Margin="0,10,0,0"/>
+                            <Border x:Name="NoticeCommand" Background="#40000000" CornerRadius="12" Padding="16,10" Margin="0,16,0,0">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <SelectableTextBlock x:Name="NoticeCommandText" FontFamily="Cascadia Mono, Consolas, Menlo, monospace" FontSize="14" Foreground="{StaticResource Ink}" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                                    <Button x:Name="NoticeCopy" Grid.Column="1" Classes="link" Margin="14,0,0,0" VerticalAlignment="Center" Content="{local:T 'Copy'}"/>
+                                </Grid>
+                            </Border>
+                            <StackPanel x:Name="NoticeWait" Orientation="Horizontal" Spacing="12" Margin="0,18,0,0">
+                                <local:Spinner VerticalAlignment="Center"/>
+                                <TextBlock x:Name="NoticeWaitText" Classes="small" Foreground="{StaticResource Soft}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <WrapPanel x:Name="NoticeButtons" Margin="0,14,0,0">
+                                <Button x:Name="NoticeYes" Classes="primary" Height="50" FontSize="16" CornerRadius="25" Padding="28,0" Margin="0,8,14,0"/>
+                                <Button x:Name="NoticeNo" Classes="soft" Height="50" CornerRadius="25" Margin="0,8,0,0"/>
+                            </WrapPanel>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Panel>
+
         <!-- A sheet over everything, for what's worth reading only if you want to. -->
         <Panel x:Name="Sheet" IsVisible="False" Opacity="0">
             <Border x:Name="SheetDim" Background="#99000000"/>
-            <Border x:Name="SheetBox" Width="560" MaxHeight="600" CornerRadius="26" Background="#1B1826" BorderBrush="{StaticResource Line}" BorderThickness="1" Padding="34,30"
+            <Border x:Name="SheetBox" Width="560" MaxHeight="650" CornerRadius="26" Background="#1B1826" BorderBrush="{StaticResource Line}" BorderThickness="1" Padding="34,30"
                     HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 24 60 0 #80000000">
                 <Grid RowDefinitions="Auto,*,Auto">
                     <TextBlock x:Name="SheetTitle" Classes="h1" FontSize="28" LineHeight="34"/>
-                    <ScrollViewer Grid.Row="1" Margin="0,14,0,0" MaxHeight="400">
-                        <SelectableTextBlock x:Name="SheetText" FontSize="15.5" LineHeight="23" Foreground="{StaticResource Soft}" TextWrapping="Wrap"/>
+                    <ScrollViewer Grid.Row="1" Margin="0,14,0,0" MaxHeight="476">
+                        <StackPanel>
+                            <SelectableTextBlock x:Name="SheetText" FontSize="15.5" LineHeight="23" Foreground="{StaticResource Soft}" TextWrapping="Wrap"/>
+                            <StackPanel x:Name="SheetRows" Spacing="12" Margin="0,0,14,0" IsVisible="False"/>
+                        </StackPanel>
                     </ScrollViewer>
                     <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="12" Margin="0,22,0,0">
                         <Button x:Name="SheetClose" Classes="soft" Content="{local:T 'Close'}"/>

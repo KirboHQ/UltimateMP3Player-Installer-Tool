@@ -34,8 +34,11 @@
 - 🎵 **Sempre l'ultimo [Ultimate MP3 Player](https://github.com/KirboHQ/UltimateMP3Player)**, direttamente dalla sua
   ultima release.
 - 🆓 **Gratis**, con il tuo Apple ID: niente account sviluppatore a pagamento, niente Mac, niente jailbreak.
-- 🔄 **Rinnovata come preferisci**: un clic qui ogni 7 giorni, oppure dall'iPhone da solo con
-  [SideStore](https://sidestore.io), che il programma prepara per te.
+- 🔄 **Rinnovata come preferisci**: un clic qui ogni 7 giorni, oppure l'app si rinnova e si aggiorna da sola sull'iPhone,
+  senza cavo.
+- 📦 **Porti tutto con te**: se l'app c'è anche su questo computer, brani, playlist, statistiche e aspetto vanno
+  sull'iPhone con il cavo.
+- 🔔 **Niente da indovinare**: quello che serve, e quello che non serve più, ti compare davanti.
 - 💾 **La tua musica resta**: rinnovi e aggiornamenti lasciano brani e playlist dove sono.
 - ⬆️ **Si aggiorna da solo**: una nuova versione di questo programma si scarica in sottofondo e si installa quando lo chiudi.
 - 🧹 **Non lascia niente in giro**: un pulsante toglie tutto quello che ha messo sul computer, e su Windows lo fa anche la
@@ -43,11 +46,11 @@
 
 <table>
   <tr>
-    <td width="50%"><img src="assets/readme/it/choice.webp" alt="Dopo aver collegato l'iPhone: rinnovarla con il cavo, o lasciarlo fare all'iPhone con SideStore"></td>
+    <td width="50%"><img src="assets/readme/it/renew.webp" alt="L'app che si rinnova da sola: un codice da inquadrare con la fotocamera dell'iPhone, e i tre passaggi che servono"></td>
     <td width="50%"><img src="assets/readme/it/activate.webp" alt="Un iPhone disegnato che mostra dove attivare la modalità sviluppatore"></td>
   </tr>
   <tr>
-    <td width="50%"><img src="assets/readme/it/sidestore.webp" alt="SideStore: un codice da inquadrare con la fotocamera dell'iPhone, e i tre tocchi che servono"></td>
+    <td width="50%"><img src="assets/readme/it/notice.webp" alt="Un avviso davanti a tutto: non serve più, puoi eliminare SideStore"></td>
     <td width="50%"><img src="assets/readme/it/done.webp" alt="Fatto, con i coriandoli"></td>
   </tr>
 </table>
@@ -134,14 +137,19 @@ Poi apri Ultimate MP3 Player.
 ## 💡 Buono a sapersi
 
 - 📅 **7 giorni.** Un'app firmata con un Apple ID gratuito funziona per 7 giorni. Prima che finiscano, collega il cavo e
-  premi **Rinnova**: un clic, e musica e playlist restano dove sono. Le nuove versioni dell'app arrivano allo stesso modo.
-- 📲 **Oppure SideStore**, se lo scegli dopo aver collegato l'iPhone (o più avanti, dalla pagina iniziale del programma):
-  rinnova l'app sul telefono, via Wi-Fi con [LocalDevVPN](https://apps.apple.com/app/id6755608044) collegata, e porta
-  anche le nuove versioni. Il programma lo installa e ti mostra i tre tocchi che servono (il primo accesso in SideStore può
-  metterci un paio di minuti ad aprirsi: aspetta e basta); poi apri SideStore ogni tanto. Se un giorno smette,
-  **Ripara SideStore** nel programma lo rimette a posto con il cavo.
+  premi **Rinnova**: un clic, pochi secondi, e musica e playlist restano dove sono. Le nuove versioni dell'app arrivano
+  allo stesso modo.
+- 📲 **Oppure fa da sola**, nelle versioni recenti dell'app: si rinnova e si aggiorna sull'iPhone, senza cavo e senza
+  computer. Le serve [LocalDevVPN](https://apps.apple.com/app/id6755608044), una piccola app gratuita dell'App Store,
+  collegata (permette a un'app di raggiungere l'iPhone su cui si trova; da lì non esce niente). Il programma te lo propone
+  dopo la prima installazione, o dalla pagina iniziale, e mostra ogni passaggio.
+- 🧩 **Oppure SideStore**, se lo preferisci: **Preferisco SideStore**, nella pagina iniziale, installa
+  [SideStore](https://sidestore.io) e ti mostra i tocchi che servono (il primo accesso in SideStore può metterci un paio di
+  minuti ad aprirsi: aspetta e basta); poi aprilo ogni tanto. Se un giorno smette, **Ripara SideStore** lo rimette a posto
+  con il cavo.
 - 🔒 **La tua password** va direttamente ad Apple e non viene conservata: sul computer resta un token di accesso, finché
-  non esci. Apple vuole anche la prova che il login arrivi da un dispositivo Apple: per questo un servizio esterno crea
+  non esci. Se fai rinnovare l'app da sola, il token e la chiave di firma vengono messi anche dentro l'app, finché non la
+  elimini. Apple vuole anche la prova che il login arrivi da un dispositivo Apple: per questo un servizio esterno crea
   un'identità casuale, senza mai vedere la tua email o la tua password. Per una sicurezza in più, crea un secondo Apple ID
   gratuito solo per questo.
 - 🍎 **I limiti di Apple** per un Apple ID gratuito: 3 app di questo tipo alla volta (SideStore è una di queste) e 10 nuove
@@ -167,7 +175,8 @@ Un piccolo aiutante che arriva con il programma ([helper](helper), Rust) firma l
 [isideload](https://github.com/nab138/isideload) e la mette sul telefono con [idevice](https://github.com/jkcoxson/idevice);
 questo programma (C#, [Avalonia](https://avaloniaui.net)) lo guida e spiega cosa sta succedendo. Raggiunge il telefono
 attraverso il servizio di Apple: Dispositivi Apple su Windows, già dentro macOS, `usbmuxd` su Linux. Scarica solo l'app,
-e SideStore se lo scegli: una versione fissata e controllata con il suo hash.
+e SideStore se lo scegli, controllati con il loro hash. Lo stesso helper, compilato come libreria
+([ios.sh](helper/ios.sh), su un Mac), è quello con cui l'app si rinnova da sola: ogni release lo ha come `umprenew-ios.zip`.
 
 Per compilarlo (.NET 10 SDK e Rust): `cargo build --release` in `helper`, poi `dotnet run --project src/Installer`.
 I controlli e tutte le schermate: `tests/Shots`. Pacchetti: [release.yml](.github/workflows/release.yml).

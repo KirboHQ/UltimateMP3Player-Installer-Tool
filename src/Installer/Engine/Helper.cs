@@ -137,8 +137,92 @@ public sealed class HelperEvent
     public PhoneRequest Phone => Text("what") switch { "trust" => PhoneRequest.Trust, "unlock" => PhoneRequest.Unlock, _ => PhoneRequest.None };
 }
 
+// What's on a phone, as the phone itself says (AppAsync). Not trusted: it doesn't know this computer yet, so it didn't say.
+public sealed record PhoneApp(bool Trusted, string? Version = null, int Renews = 0, DateTime? ExpiresUtc = null, bool Vpn = false, bool SideStore = false, int Imports = 0)
+{
+    public static PhoneApp From(HelperEvent e) => new(e.Flag("trusted"), e.Text("version"), (int)(e.Number("renews") ?? 0),
+        Helper.Moment(e), e.Flag("vpn"), e.Flag("sidestore"), (int)(e.Number("imports") ?? 0));
+}
+
 public static class Helper
 {
+    internal static DateTime? Moment(HelperEvent e) => e.Number("expires") is { } seconds ? DateTime.UnixEpoch.AddSeconds(seconds) : null;
+
+    // What's on the phone, without asking anything of it; null when it can't be asked (unplugged meanwhile, say), or doesn't answer:
+    // it's only to know more, so nothing ever waits on it for long.
+    public static async Task<PhoneApp?> AppAsync(string udid, CancellationToken ct)
+    {
+        using var soon = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        soon.CancelAfter(TimeSpan.FromSeconds(20));
+        try
+        {
+            using var run = HelperRun.Start("app", udid);
+            PhoneApp? app = null;
+            await run.ReadAsync(e =>
+            {
+                if (e.Event == "app") app = PhoneApp.From(e);
+                return Task.CompletedTask;
+            }, soon.Token);
+            return app;
+        }
+        catch (Exception) when (!ct.IsCancellationRequested) { return null; }
+    }
+
+    // A new signature for the app that's on the phone, in seconds, with nothing sent again. Null when this one can't be renewed
+    // that way (installed before this existed, its certificate gone...): then it's installed again, which always works.
+    public static async Task<DateTime?> RenewAsync(string udid, Action<string?, double> stage, Action<PhoneRequest> phone, CancellationToken ct)
+    {
+        using var run = HelperRun.Start("renew", udid);
+        DateTime? expires = null;
+        int code = await run.ReadAsync(e =>
+        {
+            switch (e.Event)
+            {
+                case "stage":
+                    var (friendly, overall) = Progress.Of(e.Text("stage") ?? "", e.Number("progress"));
+                    stage(friendly, overall);
+                    break;
+                case "phone": phone(e.Phone); break;
+                case "done" when e.Flag("renewed"): expires = Moment(e) ?? DateTime.UtcNow.AddDays(Memory.SignedDays); break;
+            }
+            return Task.CompletedTask;
+        }, ct);
+        if (code != 0) throw new HelperException(run.Log);
+        return expires;
+    }
+
+    // What the app needs to renew itself, put inside it: the sign-in's token, the signing key and the pairing (never the password).
+    public static async Task PlaceAsync(string udid, Action<PhoneRequest> phone, CancellationToken ct)
+    {
+        using var run = HelperRun.Start("place", udid);
+        int code = await run.ReadAsync(e =>
+        {
+            if (e.Event == "phone") phone(e.Phone);
+            return Task.CompletedTask;
+        }, ct);
+        if (code != 0) throw new HelperException(run.Log);
+    }
+
+    // What the app on this computer has, put inside the one on the phone (ComputerLibrary.Pack makes the list): stopped halfway, the
+    // next time sends only what's left.
+    public static async Task SendAsync(string udid, string list, Action<string?, double> stage, Action<PhoneRequest> phone, CancellationToken ct)
+    {
+        using var run = HelperRun.Start("send", udid, list);
+        int code = await run.ReadAsync(e =>
+        {
+            switch (e.Event)
+            {
+                case "stage":
+                    var (friendly, overall) = Progress.Of(e.Text("stage") ?? "", e.Number("progress"));
+                    stage(friendly, overall);
+                    break;
+                case "phone": phone(e.Phone); break;
+            }
+            return Task.CompletedTask;
+        }, ct);
+        if (code != 0) throw new HelperException(run.Log);
+    }
+
     // Who's signed in, or null.
     public static async Task<string?> AccountAsync(CancellationToken ct)
     {
@@ -254,6 +338,9 @@ public static class Progress
             "Preparing" => (L.T("Getting your iPhone ready"), 0.10 * p),
             "Signing" => (L.T(p < 0.3 ? "Apple is preparing the signature" : "Signing the app with your Apple ID"), 0.10 + 0.35 * p),
             "Installing" => (L.T(p < 0.7 ? "Sending it to your iPhone" : "Your iPhone is installing it"), 0.45 + 0.55 * p),
+            // (a new signature alone, RenewAsync)
+            "Renewing" => (L.T(p < 0.2 ? "Getting your iPhone ready" : p < 0.8 ? "Apple is renewing the signature" : "Putting it on your iPhone"), p),
+            "Sending" => (L.T("Sending everything to your iPhone"), p),
             // (SideStore's way to the phone: made before its install, and put inside it after)
             "Pairing" => (L.T("Letting SideStore reach your iPhone by itself"), p < 0.5 ? 0 : 1),
             _ => (null, 0),
@@ -281,6 +368,8 @@ public static class Errors
         (new[] { "error sending request", "tcp connect error", "dns error", "anisette", "URL Bag" }, "I can't reach the signing service", "Check your connection. If it's fine, the service is down for a moment: try again in a few minutes.", null, true),
         (new[] { "No such host", "HttpRequestException", "Name or service not known", "SSL connection", "response status code" }, "No internet connection", "I can't reach GitHub to get the app. Check your connection and try again.", null, false),
         (new[] { "maximum number", "too many", "App ID limit" }, "This Apple ID reached Apple's free limit", "A free account holds 3 apps at a time and 10 new ones a week. Remove a sideloaded app from your iPhone or use a different Apple ID.", AnotherId, false),
+        (new[] { "can't take it: install its latest" }, "Install or update the app first", "This iPhone doesn't have the version of the app that can take your things. Go back and press the big button.", null, false),
+        (new[] { "Not enough space on the phone", "No space left" }, "There's no room on your iPhone", "Make some space on it, or leave the music files out: those songs can play from their link.", null, false),
         (new[] { "device not found", "device socket io failed", "no device", "AFC" }, "I lost your iPhone", "Check the cable, unlock the phone and try again.", null, false),
     };
 

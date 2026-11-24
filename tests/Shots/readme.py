@@ -76,8 +76,8 @@ for lang in ("en", "it"):
     save(rounded(hero, 36), lang, "hero.webp")
 
     # The steps: the window alone, on transparency.
-    for name in ("choice", "activate", "sidestore", "done"):
-        card = window(lang, name, 1120)
+    for shot, name in (("self2", "renew"), ("activate", "activate"), ("home-left-notice", "notice"), ("done", "done")):
+        card = window(lang, shot, 1120)
         m = 44
         canvas = Image.new("RGBA", (card.width + 2 * m, card.height + 2 * m + 12), (0, 0, 0, 0))
         paste_shadow(canvas, card, (m, m - 8), blur=22, dy=12, alpha=110)

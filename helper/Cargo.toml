@@ -4,11 +4,23 @@ version = "0.1.0"
 edition = "2024"
 publish = false
 
+# The library the iPhone's app carries too (as a framework, built with --features phone): see src/lib.rs.
+[lib]
+name = "umprenew"
+
+[[bin]]
+name = "ump-helper"
+path = "src/main.rs"
+
+# What only the phone itself needs to reach its own services.
+[features]
+phone = ["idevice/tcp", "idevice/tunnel_tcp_stack", "idevice/heartbeat", "tokio/net", "tokio/sync"]
+
 # Exact versions: this program hands them an Apple password, so nothing moves without a decision (the same ones iloader 2.4.1
 # ships). idevice without its default features: ring, as isideload asks, instead of aws-lc and its extra build tools.
 [dependencies]
 isideload = { version = "=0.5.2", default-features = false, features = ["install", "fs-storage", "tokio-mt"] }
-idevice = { version = "=0.1.68", default-features = false, features = ["ring", "usbmuxd", "pair", "afc", "house_arrest", "installation_proxy", "remote_pairing", "rsd"] }
+idevice = { version = "=0.1.68", default-features = false, features = ["ring", "usbmuxd", "pair", "afc", "house_arrest", "installation_proxy", "misagent", "remote_pairing", "rsd"] }
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "time"] }
 rustls = { version = "0.23", default-features = false, features = ["ring"] }
 rootcause = "0.12"
@@ -20,6 +32,7 @@ async-trait = "0.1"
 plist = "1.8"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+sha2 = "0.11"
 uuid = { version = "1", features = ["v4"] }
 tracing-subscriber = "0.3"
 
